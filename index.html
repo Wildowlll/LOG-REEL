@@ -1,0 +1,4733 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>LOG/REEL — 코코포리아 로그를 비주얼 노벨로</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#100f18;
+    --panel:#1a1826;
+    --panel-2:#221f30;
+    --edge:#332f43;
+    --ink:#ede8e2;
+    --ink-dim:#9691a3;
+    --ink-faint:#6b6779;
+    --accent:#b1453f;
+    --accent-soft:#c97b73;
+    --gold:#c9a15a;
+    --success:#8ba36e;
+    --fail:#b1453f;
+    --font-display:'Noto Serif KR', serif;
+    --font-ui:-apple-system, BlinkMacSystemFont, 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    --font-mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--void);color:var(--ink);font-family:var(--font-ui);}
+  body{min-height:100vh;overflow-x:hidden;}
+  button{font-family:inherit;cursor:pointer;}
+  textarea{font-family:var(--font-mono);}
+
+  /* ---------- layout shell ---------- */
+  #app{position:relative;width:100%;min-height:100vh;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* ================= SETUP VIEW ================= */
+  #setupView.active{
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:min(9vh,72px) 20px 80px;
+    background:
+      radial-gradient(120% 90% at 50% -10%, #241f33 0%, var(--void) 55%);
+  }
+  .setup-frame{width:100%;max-width:640px;}
+  .setup-header{margin-bottom:36px;}
+  .eyebrow{
+    display:inline-block;
+    font:600 11px/1 var(--font-mono);
+    letter-spacing:.22em;
+    color:var(--gold);
+    text-transform:uppercase;
+    border:1px solid rgba(201,161,90,.35);
+    padding:6px 10px;
+    border-radius:2px;
+    margin-bottom:18px;
+  }
+  .setup-header h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(26px,4.6vw,38px);
+    line-height:1.35;
+    margin:0 0 14px;
+    letter-spacing:-.01em;
+  }
+  .setup-header .lede{
+    color:var(--ink-dim);
+    font-size:15px;
+    line-height:1.7;
+    margin:0;
+    max-width:52ch;
+  }
+
+  .dropzone{
+    border:1.5px dashed var(--edge);
+    border-radius:10px;
+    padding:34px 20px;
+    text-align:center;
+    background:rgba(255,255,255,.015);
+    transition:border-color .18s ease, background .18s ease;
+    cursor:pointer;
+  }
+  .dropzone:hover, .dropzone.dragover{
+    border-color:var(--accent-soft);
+    background:rgba(177,69,63,.06);
+  }
+  .dropzone-icon{font-size:28px;margin-bottom:10px;filter:grayscale(.2);}
+  .dropzone-title{margin:0 0 4px;font-size:14.5px;color:var(--ink);}
+  .dropzone-sub{margin:0;font-size:12.5px;color:var(--ink-faint);}
+
+  .or-divider{display:flex;align-items:center;gap:14px;margin:20px 0;}
+  .or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--edge);}
+  .or-divider span{font-size:11px;color:var(--ink-faint);letter-spacing:.08em;}
+
+  #pasteArea{
+    width:100%;min-height:110px;resize:vertical;
+    background:var(--panel);border:1px solid var(--edge);border-radius:8px;
+    color:var(--ink-dim);font-size:12.5px;line-height:1.6;padding:14px;
+    outline:none;
+  }
+  #pasteArea:focus{border-color:var(--accent-soft);}
+
+  .setup-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .btn{
+    border:none;border-radius:7px;padding:12px 20px;font-size:14px;font-weight:600;
+    transition:transform .12s ease, opacity .12s ease, background .12s ease;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--accent);color:#fbf3ef;}
+  .btn-primary:hover{background:#c25049;}
+  .btn-ghost{background:transparent;color:var(--ink-dim);border:1px solid var(--edge);}
+  .btn-ghost:hover{color:var(--ink);border-color:var(--ink-faint);}
+  .btn-large{width:100%;padding:15px 20px;font-size:15px;}
+
+  .error-msg{
+    margin-top:16px;padding:12px 14px;border-radius:7px;
+    background:rgba(177,69,63,.1);border:1px solid rgba(177,69,63,.35);
+    color:var(--accent-soft);font-size:13px;line-height:1.6;
+  }
+
+  .preview-panel{margin-top:28px;padding-top:26px;border-top:1px solid var(--edge);}
+  .preview-stats{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--edge);border-radius:8px;overflow:hidden;}
+  .stat{flex:1;text-align:center;padding:16px 8px;border-right:1px solid var(--edge);}
+  .stat:last-child{border-right:none;}
+  .stat-num{display:block;font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--gold);}
+  .stat-label{display:block;font-size:11.5px;color:var(--ink-faint);margin-top:4px;letter-spacing:.03em;}
+
+  .cast-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+  .cast-row{
+    display:flex;align-items:flex-start;gap:12px;
+    background:var(--panel);border:1px solid var(--edge);border-radius:10px;
+    padding:9px 14px 9px 9px;transition:opacity .15s ease;
+  }
+  .cast-row.is-gm{opacity:.68;}
+  .cast-avatar{
+    width:32px;height:32px;border-radius:50%;flex-shrink:0;
+    border:none;position:relative;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-size:12px;font-weight:700;color:#12111a;
+    background-size:cover;background-position:center;
+    padding:0;
+  }
+  .cast-avatar:disabled{cursor:not-allowed;}
+  .cast-avatar.dragover{box-shadow:0 0 0 2px var(--accent-soft);}
+  .cast-avatar::after{
+    content:'+';position:absolute;right:-3px;bottom:-3px;
+    width:15px;height:15px;border-radius:50%;background:var(--panel-2);
+    border:1px solid var(--edge);font-size:10px;line-height:13px;color:var(--ink-dim);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .cast-row.is-gm .cast-avatar::after{content:'';display:none;}
+  .cast-avatar.has-image::after{content:'✓';color:var(--success);}
+  .cast-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;padding-top:4px;}
+  .cast-name-line{display:flex;align-items:center;gap:8px;}
+  .cast-name{flex:1;font-size:13.5px;color:var(--ink);}
+  .cast-color{
+    width:22px;height:22px;padding:0;border:1px solid var(--edge);border-radius:6px;
+    background:none;cursor:pointer;flex-shrink:0;
+  }
+  .cast-color::-webkit-color-swatch-wrapper{padding:2px;}
+  .cast-color::-webkit-color-swatch{border:none;border-radius:4px;}
+  .cast-color::-moz-color-swatch{border:none;border-radius:4px;}
+  .cast-gm-toggle{
+    display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-faint);
+    cursor:pointer;user-select:none;flex-shrink:0;
+  }
+  .cast-gm-toggle input{accent-color:var(--gold);width:14px;height:14px;cursor:pointer;}
+  .cast-hint{font-size:11.5px;color:var(--ink-faint);margin:0 0 20px;}
+
+  .lib-section{margin-bottom:22px;}
+  .lib-header{margin-bottom:10px;}
+  .lib-title{font-size:13px;font-weight:700;color:var(--ink);margin-right:8px;}
+  .lib-sub{font-size:11.5px;color:var(--ink-faint);}
+  .bgm-link-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .bgm-link-input{
+    background:var(--panel);border:1px solid var(--edge);border-radius:7px;
+    color:var(--ink);font-size:12.5px;padding:8px 10px;outline:none;
+  }
+  .bgm-link-label{width:110px;flex-shrink:0;}
+  .bgm-link-url{flex:1;min-width:160px;}
+  .bgm-link-input:focus{border-color:var(--accent-soft);}
+  .expr-chip.bgm-chip{
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;color:var(--ink-dim);background-color:var(--panel-2);
+  }
+  .expr-chip .expr-type-badge{
+    position:absolute;left:2px;top:2px;font-size:7px;font-family:var(--font-mono);
+    background:rgba(10,9,15,.7);color:var(--gold);padding:1px 3px;border-radius:2px;
+    letter-spacing:.02em;
+  }
+
+  .expr-strip{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-radius:8px;transition:background .12s ease;}
+  .expr-strip.dragover{background:rgba(177,69,63,.08);outline:1.5px dashed var(--accent-soft);outline-offset:4px;}
+  .expr-chip{
+    position:relative;width:36px;height:36px;border-radius:8px;overflow:visible;
+    background-size:cover;background-position:center;background-color:var(--panel-2);
+    border:1px solid var(--edge);cursor:pointer;flex-shrink:0;
+  }
+  .expr-chip .expr-label{
+    position:absolute;left:0;right:0;bottom:0;font-size:8px;line-height:1.4;
+    background:rgba(10,9,15,.72);color:var(--ink);text-align:center;padding:1px 2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:0 0 8px 8px;
+  }
+  .expr-chip .expr-remove{
+    position:absolute;top:-5px;right:-5px;width:15px;height:15px;border-radius:50%;
+    background:var(--accent);color:#fbf3ef;font-size:9px;line-height:15px;text-align:center;
+    border:none;cursor:pointer;padding:0;
+  }
+  .expr-add{
+    width:36px;height:36px;border-radius:8px;border:1px dashed var(--edge);
+    background:transparent;color:var(--ink-faint);font-size:16px;cursor:pointer;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
+  .expr-add:hover{border-color:var(--accent-soft);color:var(--ink);}
+
+  .preview-actions{display:flex;flex-direction:column;gap:10px;}
+
+  /* ================= REVIEW (ADVANCED) VIEW ================= */
+  #reviewView.active{display:flex;}
+  #reviewView{
+    min-height:100vh;justify-content:center;
+    background:radial-gradient(120% 90% at 50% -10%, #241f33 0%, var(--void) 55%);
+    padding:0 0 40px;
+  }
+  .review-shell{width:100%;max-width:760px;margin:0 auto;padding:0 20px;display:flex;flex-direction:column;}
+
+  .review-header{
+    position:sticky;top:0;z-index:5;padding:26px 0 16px;
+    background:linear-gradient(180deg, var(--void) 70%, rgba(16,15,24,0) 100%);
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .review-back{align-self:flex-start;padding:8px 14px;font-size:13px;}
+  .review-title h2{
+    font-family:var(--font-display);font-weight:700;font-size:clamp(19px,3.2vw,25px);
+    margin:10px 0 6px;line-height:1.4;
+  }
+  .review-sub{margin:0;color:var(--ink-dim);font-size:13px;}
+  #reviewResetBtn{align-self:flex-start;font-size:12.5px;padding:8px 14px;}
+
+  .review-toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .review-search{
+    flex:1;min-width:160px;background:var(--panel);border:1px solid var(--edge);border-radius:7px;
+    color:var(--ink);font-size:13px;padding:9px 12px;outline:none;
+  }
+  .review-search:focus{border-color:var(--accent-soft);}
+  .review-filter{
+    background:var(--panel);border:1px solid var(--edge);border-radius:7px;
+    color:var(--ink-dim);font-size:12.5px;padding:9px 10px;outline:none;
+  }
+
+  .review-list{display:flex;flex-direction:column;gap:8px;padding-bottom:24px;}
+  .review-card{
+    display:grid;grid-template-columns:26px 1fr auto;gap:12px;align-items:start;
+    background:var(--panel);border:1px solid var(--edge);border-left:3px solid var(--edge);
+    border-radius:8px;padding:12px 14px;
+  }
+  .review-card .rc-index{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);padding-top:3px;}
+  .review-card .rc-body{min-width:0;}
+  .review-card .rc-speaker{
+    font-size:11.5px;font-weight:700;color:var(--gold);letter-spacing:.02em;margin-bottom:4px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .review-card .rc-badge{
+    font-family:var(--font-mono);font-size:9.5px;font-weight:600;letter-spacing:.04em;
+    padding:2px 6px;border-radius:3px;background:var(--panel-2);color:var(--ink-faint);
+    text-transform:uppercase;
+  }
+  .review-card .rc-text{font-size:13.5px;line-height:1.6;color:var(--ink);word-break:break-word;}
+  .review-card.rc-skip .rc-text{color:var(--ink-faint);text-decoration:line-through;}
+  .review-card .rc-selects{display:flex;flex-direction:column;gap:6px;}
+  .review-card select.rc-select{
+    background:var(--panel-2);border:1px solid var(--edge);border-radius:6px;
+    color:var(--ink-dim);font-size:12px;padding:7px 8px;outline:none;cursor:pointer;
+    max-width:150px;
+  }
+  .review-card select.rc-expr-select{color:var(--gold);border-color:rgba(201,161,90,.35);}
+  .review-card select.rc-select:focus{border-color:var(--accent-soft);}
+  .review-card[data-effective="dialogue"]{border-left-color:#7d95c9;}
+  .review-card[data-effective="narration"]{border-left-color:var(--ink-faint);}
+  .review-card[data-effective="ending"]{border-left-color:var(--gold);}
+  .review-card[data-effective="judgement"]{border-left-color:var(--gold);}
+  .review-card[data-effective="system"]{border-left-color:var(--ink-faint);}
+  .review-card[data-effective="divider"]{border-left-color:var(--ink-faint);}
+  .review-card[data-effective="skip"]{border-left-color:var(--accent);opacity:.55;}
+  .review-card.rc-hidden{display:none;}
+
+  .review-footer{
+    position:sticky;bottom:0;padding:16px 0 6px;
+    background:linear-gradient(0deg, var(--void) 60%, rgba(16,15,24,0) 100%);
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  }
+  .review-footer-hint{font-size:11.5px;color:var(--ink-faint);}
+
+  /* ================= PLAYER VIEW ================= */
+  #playerView.active{display:block;}
+  .stage{
+    position:relative;width:100%;height:100vh;overflow:hidden;
+    background:
+      radial-gradient(140% 90% at 50% 15%, #262032 0%, #100f18 60%),
+      linear-gradient(180deg,#0d0c14 0%, #100f18 100%);
+    background-size:220% 220%, 100% 100%;
+    animation:ambientDrift 50s ease-in-out infinite alternate;
+  }
+  @keyframes ambientDrift{
+    0%{background-position:20% 10%, 0 0;}
+    100%{background-position:80% 40%, 0 0;}
+  }
+
+  .film-holes{position:absolute;left:0;right:0;height:14px;z-index:5;
+    background-image:radial-gradient(circle, rgba(237,232,226,.16) 2.6px, transparent 2.7px);
+    background-size:26px 14px;background-position:8px center;}
+  .film-holes-top{top:0;}
+  .film-holes-bottom{bottom:0;}
+
+  .bg-layer{
+    position:absolute;inset:0;z-index:1;
+    background-size:cover;background-position:center;background-repeat:no-repeat;
+    opacity:0;transition:opacity 1s ease;
+  }
+
+  .stage-btn{
+    position:absolute;top:22px;z-index:20;
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(16,15,24,.55);border:1px solid rgba(237,232,226,.15);
+    color:var(--ink-dim);font-size:14px;display:flex;align-items:center;justify-content:center;
+    backdrop-filter:blur(4px);transition:color .15s, border-color .15s;
+  }
+  .stage-btn:hover{color:var(--ink);border-color:rgba(237,232,226,.4);}
+  .stage-btn-back{left:20px;}
+  .stage-btn-mute{right:108px;}
+  .stage-btn-mute.muted{color:var(--accent-soft);}
+  .stage-btn-log{right:64px;}
+  .stage-btn-auto{right:20px;}
+  .stage-btn-auto.on{color:var(--gold);border-color:var(--gold);}
+
+  .bgm-yt-frame{
+    position:absolute;left:20px;top:64px;z-index:19;
+    width:160px;height:90px;border-radius:8px;overflow:hidden;
+    border:1px solid rgba(237,232,226,.15);background:#000;
+    box-shadow:0 12px 30px -10px rgba(0,0,0,.6);
+    display:none;
+  }
+  .bgm-yt-frame.show{display:block;}
+  .bgm-yt-frame iframe{width:100%;height:100%;border:0;}
+
+  .scene{position:relative;width:100%;height:100%;}
+
+  .portrait-wrap{
+    position:absolute;left:clamp(20px,6vw,72px);bottom:186px;
+    z-index:3;pointer-events:none;
+    transition:opacity .35s ease;opacity:0;
+  }
+  .portrait-wrap.show{opacity:1;}
+  .portrait{
+    width:min(28vw,180px);height:min(28vw,180px);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-size:min(9vw,54px);font-weight:700;color:rgba(16,15,24,.75);
+    box-shadow:0 0 0 1px rgba(237,232,226,.08), 0 30px 60px -20px rgba(0,0,0,.6);
+    transition:background-color .4s ease, width .3s ease, height .3s ease, border-radius .3s ease;
+    background-size:cover;background-position:center top;background-repeat:no-repeat;
+  }
+  .portrait.has-image{
+    border-radius:16px;
+    width:min(32vw,230px);height:min(46vw,320px);
+    background-size:contain;background-position:center bottom;
+  }
+
+  .narration-layer{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(640px,86vw);text-align:center;z-index:6;
+    font-family:var(--font-display);font-style:italic;font-weight:500;
+    font-size:clamp(17px,2.6vw,22px);line-height:1.85;color:var(--ink);
+    opacity:0;transition:opacity .3s ease;
+    padding:20px 30px;border-radius:16px;
+    background:linear-gradient(180deg, rgba(20,18,28,.58) 0%, rgba(14,13,20,.72) 100%);
+    border:1px solid rgba(237,232,226,.07);
+    backdrop-filter:blur(4px);
+    box-shadow:0 24px 50px -24px rgba(0,0,0,.6);
+  }
+  .narration-layer.show{opacity:1;}
+
+  .cue-banner{
+    position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.94);
+    z-index:7;opacity:0;pointer-events:none;transition:opacity .3s ease, transform .3s ease;
+    font-family:var(--font-mono);font-size:13px;letter-spacing:.14em;color:var(--gold);
+    border-top:1px solid rgba(201,161,90,.4);border-bottom:1px solid rgba(201,161,90,.4);
+    padding:10px 22px;text-align:center;
+    background:rgba(14,13,20,.55);backdrop-filter:blur(3px);
+  }
+  .cue-banner.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+  .ending-card{
+    position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;text-align:center;background:rgba(10,9,15,.72);
+    opacity:0;pointer-events:none;transition:opacity .5s ease;padding:0 24px;
+  }
+  .ending-card.show{opacity:1;pointer-events:auto;}
+  .ending-card .eyebrow{color:var(--gold);font:600 11px/1 var(--font-mono);letter-spacing:.24em;margin-bottom:16px;}
+  .ending-card h2{font-family:var(--font-display);font-size:clamp(22px,4vw,32px);font-weight:700;color:var(--ink);max-width:22ch;line-height:1.4;margin:0;}
+
+  .system-toast{
+    position:absolute;top:64px;left:50%;transform:translate(-50%,-14px);
+    z-index:12;opacity:0;pointer-events:none;transition:opacity .3s ease, transform .3s ease;
+    background:rgba(26,24,38,.9);border:1px solid var(--edge);border-radius:20px;
+    padding:8px 18px;font-size:12.5px;color:var(--ink-dim);font-family:var(--font-mono);
+    white-space:nowrap;
+  }
+  .system-toast.show{opacity:1;transform:translate(-50%,0);}
+
+  .divider-veil{
+    position:absolute;inset:0;background:#0a090f;z-index:14;pointer-events:none;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;transition:opacity .5s ease;
+  }
+  .divider-veil.show{opacity:1;}
+  .divider-veil span{color:var(--ink-faint);letter-spacing:.5em;font-size:12px;}
+
+  .dialogue-box{
+    position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+    width:min(760px,94vw);margin-bottom:26px;z-index:8;
+    background:linear-gradient(180deg, rgba(26,24,38,.72) 0%, rgba(18,17,26,.94) 100%);
+    border:1px solid rgba(237,232,226,.08);border-radius:12px;
+    padding:20px 24px 22px;backdrop-filter:blur(6px);
+    opacity:0;transition:opacity .25s ease;
+  }
+  .dialogue-box.show{opacity:1;}
+  .name-tag{
+    display:inline-block;font-family:var(--font-display);font-weight:700;font-size:14.5px;
+    padding:4px 14px;border-radius:5px;margin-bottom:10px;color:#12111a;
+  }
+  .dialogue-text{
+    font-family:var(--font-display);font-size:clamp(15.5px,2.1vw,18px);line-height:1.85;color:var(--ink);
+    min-height:1.85em;
+  }
+  .advance-hint{
+    position:absolute;right:24px;bottom:24px;z-index:11;color:var(--ink-faint);font-size:15px;
+    animation:hintBob 1.4s ease-in-out infinite;pointer-events:none;
+    text-shadow:0 2px 6px rgba(0,0,0,.5);
+  }
+  @keyframes hintBob{0%,100%{transform:translateY(0);opacity:.5;}50%{transform:translateY(4px);opacity:1;}}
+
+  .stamp{
+    position:absolute;top:-16px;right:26px;z-index:9;
+    font-family:var(--font-display);font-weight:900;font-size:17px;letter-spacing:.06em;
+    padding:6px 16px;border:2.5px solid currentColor;border-radius:3px;
+    transform:rotate(-7deg) scale(.6);opacity:0;
+    background:rgba(16,15,24,.55);
+    transition:transform .28s cubic-bezier(.2,1.4,.4,1), opacity .2s ease;
+  }
+  .stamp.show{opacity:.92;transform:rotate(-7deg) scale(1);}
+
+  .click-catcher{position:absolute;inset:0;z-index:10;cursor:pointer;}
+
+  .progress-track{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(237,232,226,.06);z-index:16;}
+  .progress-fill{height:100%;background:var(--gold);width:0%;transition:width .25s ease;}
+
+  .backlog-panel{
+    position:absolute;top:0;right:0;bottom:0;width:min(380px,86vw);z-index:30;
+    background:rgba(16,15,24,.97);border-left:1px solid var(--edge);
+    transform:translateX(100%);transition:transform .25s ease;
+    display:flex;flex-direction:column;
+  }
+  .backlog-panel.open{transform:translateX(0);}
+  .backlog-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 20px;border-bottom:1px solid var(--edge);
+    font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;color:var(--ink-faint);
+  }
+  .backlog-header button{background:none;border:none;color:var(--ink-dim);font-size:15px;}
+  .backlog-content{flex:1;overflow-y:auto;padding:16px 20px;}
+  .backlog-item{margin-bottom:16px;font-size:13.5px;line-height:1.7;}
+  .backlog-item .bl-name{font-weight:700;color:var(--gold);display:block;margin-bottom:2px;font-size:12px;}
+  .backlog-item.narration{color:var(--ink-dim);font-style:italic;}
+  .backlog-item.dialogue{color:var(--ink);}
+  .backlog-item.judgement{color:var(--ink-faint);font-family:var(--font-mono);font-size:12px;}
+
+  @media (max-width:560px){
+    .setup-frame{max-width:100%;}
+    .dialogue-box{width:94vw;padding:16px 18px 18px;}
+    .stage-btn{width:30px;height:30px;font-size:12px;top:14px;}
+    .stage-btn-back{left:12px;}
+    .stage-btn-mute{right:96px;}
+    .stage-btn-log{right:54px;}
+    .stage-btn-auto{right:12px;}
+    .portrait-wrap{bottom:160px;}
+    .bgm-yt-frame{width:120px;height:68px;top:52px;left:12px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============= SETUP VIEW ============= -->
+  <section id="setupView" class="view active">
+    <div class="setup-frame">
+      <header class="setup-header">
+        <span class="eyebrow">CCFOLIA LOG → VISUAL NOVEL</span>
+        <h1>로그를 대사로,<br/>대사를 장면으로.</h1>
+        <p class="lede">코코포리아에서 내보낸 로그 HTML을 넣으면 GM 서술과 캐릭터 대사, 판정 결과를 그대로 살려 클릭으로 넘겨보는 비주얼 노벨로 바꿔드려요.</p>
+      </header>
+
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".html,.htm,.txt" hidden />
+        <div class="dropzone-inner">
+          <div class="dropzone-icon">🎞️</div>
+          <p class="dropzone-title">로그 파일을 끌어다 놓거나 클릭해서 선택</p>
+          <p class="dropzone-sub">코코포리아 "로그 내보내기"로 저장한 .html 파일</p>
+        </div>
+      </div>
+
+      <div class="or-divider"><span>또는 직접 붙여넣기</span></div>
+
+      <textarea id="pasteArea" placeholder="로그 HTML 코드를 여기에 붙여넣으세요..."></textarea>
+
+      <div class="setup-actions">
+        <button id="parseBtn" class="btn btn-primary">변환하기</button>
+        <button id="sampleBtn" class="btn btn-ghost">샘플로 먼저 볼까요?</button>
+      </div>
+
+      <p id="errorMsg" class="error-msg" hidden></p>
+
+      <div id="previewPanel" class="preview-panel" hidden>
+        <div class="preview-stats">
+          <div class="stat"><span class="stat-num" id="statBeats">0</span><span class="stat-label">장면</span></div>
+          <div class="stat"><span class="stat-num" id="statJudge">0</span><span class="stat-label">판정</span></div>
+          <div class="stat"><span class="stat-num" id="statChar">0</span><span class="stat-label">등장인물</span></div>
+        </div>
+        <div class="cast-rows" id="castList"></div>
+        <p class="cast-hint">GM 이름이 다르다면 체크를 옮겨주세요 · 표정 이미지는 여러 장을 한 번에 선택하거나 끌어다 놓을 수 있어요</p>
+
+        <div class="lib-section">
+          <div class="lib-header">
+            <span class="lib-title">🖼️ 배경</span>
+            <span class="lib-sub">장면 전환에 쓸 배경 이미지 (여러 장 한 번에 추가 가능)</span>
+          </div>
+          <div class="expr-strip" id="bgStrip"></div>
+        </div>
+
+        <div class="lib-section">
+          <div class="lib-header">
+            <span class="lib-title">🎵 BGM</span>
+            <span class="lib-sub">파일 업로드 또는 mp3/유튜브 링크</span>
+          </div>
+          <div class="expr-strip" id="bgmStrip"></div>
+          <div class="bgm-link-row">
+            <input type="text" id="bgmLinkLabel" class="bgm-link-input bgm-link-label" placeholder="이름 (예: 전투)">
+            <input type="text" id="bgmLinkUrl" class="bgm-link-input bgm-link-url" placeholder="mp3/ogg 링크 또는 유튜브 링크 붙여넣기">
+            <button id="bgmLinkAddBtn" class="btn btn-ghost">링크로 추가</button>
+          </div>
+        </div>
+
+        <div class="preview-actions">
+          <button id="playBtn" class="btn btn-primary btn-large">▶ 재생 시작</button>
+          <button id="reviewModeBtn" class="btn btn-ghost btn-large">🛠 고급 모드 — 장면별로 확인·수정</button>
+          <button id="exportBtn" class="btn btn-ghost btn-large">⬇ 완성된 파일로 내보내기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= REVIEW (ADVANCED) VIEW ============= -->
+  <section id="reviewView" class="view">
+    <div class="review-shell">
+      <div class="review-header">
+        <button id="reviewBackBtn" class="btn btn-ghost review-back">← 미리보기로</button>
+        <div class="review-title">
+          <span class="eyebrow">고급 모드</span>
+          <h2>장면별로 확인하고, 필요하면 직접 바꿔요</h2>
+          <p class="review-sub">기본은 자동 인식 결과예요. 이상하다 싶은 줄만 골라서 바꾸면 돼요.</p>
+        </div>
+        <button id="reviewResetBtn" class="btn btn-ghost">자동 인식으로 초기화</button>
+      </div>
+
+      <div class="review-toolbar">
+        <input type="text" id="reviewSearch" class="review-search" placeholder="이름이나 대사 내용으로 찾기...">
+        <select id="reviewFilter" class="review-filter">
+          <option value="all">전체 보기</option>
+          <option value="dialogue">대사만</option>
+          <option value="narration">GM 서술만</option>
+          <option value="ending">엔딩 문구만</option>
+          <option value="judgement">판정/주사위만</option>
+          <option value="system">시스템 메시지만</option>
+          <option value="divider">장면 전환만</option>
+          <option value="skip">제외한 줄만</option>
+        </select>
+      </div>
+
+      <div class="review-list" id="reviewList"></div>
+
+      <div class="review-footer">
+        <span class="review-footer-hint">바꾼 내용은 바로 반영돼요</span>
+        <button id="reviewPlayBtn" class="btn btn-primary btn-large">▶ 이 설정으로 재생 시작</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= PLAYER VIEW ============= -->
+  <section id="playerView" class="view">
+    <div class="stage" id="stage">
+      <div class="bg-layer" id="bgLayer0"></div>
+      <div class="bg-layer" id="bgLayer1"></div>
+      <div class="film-holes film-holes-top"></div>
+      <div class="film-holes film-holes-bottom"></div>
+
+      <button class="stage-btn stage-btn-back" id="exitBtn" title="설정으로 돌아가기">✕</button>
+      <button class="stage-btn stage-btn-mute" id="muteBtn" title="BGM 음소거">🔊</button>
+      <button class="stage-btn stage-btn-log" id="backlogBtn" title="지난 대사 보기">☰</button>
+      <button class="stage-btn stage-btn-auto" id="autoBtn" title="자동 재생">▶</button>
+
+      <div class="scene" id="scene">
+        <div class="portrait-wrap" id="portraitWrap"><div class="portrait" id="portrait"></div></div>
+        <div class="narration-layer" id="narrationLayer"></div>
+        <div class="cue-banner" id="cueBanner"></div>
+        <div class="system-toast" id="systemToast"></div>
+        <div class="divider-veil" id="dividerVeil"><span>· · ·</span></div>
+        <div class="ending-card" id="endingCard">
+          <span class="eyebrow">END</span>
+          <h2 id="endingText"></h2>
+        </div>
+
+        <div class="dialogue-box" id="dialogueBox">
+          <div class="stamp" id="stamp"></div>
+          <div class="name-tag" id="nameTag"></div>
+          <div class="dialogue-text" id="dialogueText"></div>
+        </div>
+        <div class="advance-hint" id="advanceHint">▼</div>
+
+        <div class="click-catcher" id="clickCatcher"></div>
+      </div>
+
+      <div class="bgm-yt-frame" id="bgmYtWrap"><iframe id="bgmYoutube" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen frameborder="0" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+      <audio id="bgmAudio" loop></audio>
+
+      <div class="backlog-panel" id="backlogPanel">
+        <div class="backlog-header"><span>지난 대사</span><button id="closeBacklog">✕</button></div>
+        <div class="backlog-content" id="backlogContent"></div>
+      </div>
+
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </section>
+
+</div>
+
+<script type="text/plain" id="sampleLog"><!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>ccfolia - logs</title>
+  </head>
+  <body>
+    
+
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    머리가 지끈거린다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    눈을 뜨면 천장이 보인다. 낯선 천장이다. 형광등 아래 스티커가 몇 개 붙어 있다. 누군가의 방이다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    손을 움직이려 하면, 안 된다. 고개를 돌리면 침대 프레임에 손목이 묶여 있다.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    케이블 타이다. 플라스틱이 살짝 파고드는 게 느껴진다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (묶여 있는 것이 느껴지자 얼굴이 새파랗게 질린다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    방은 좁다. 책상 위에 컵라면, 노트북, 충전 중인 휴대폰. 냉장고 위에 과자 봉지. 옷이 의자에 걸쳐져 있다. 생활감이 있는 공간이다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    그 순간, 화장실 문이 열리고 물 내리는 소리가 들린다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    가벼운 발소리다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (...납치라도 당한 건가.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (손목의 감각이 꼭 몸 전체를 오염시키는 것 같다. 괜히 더 숨을 죽인다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    화장실에서 나온 이의 모습은... 당신이 몇 번 마주친 그의 모습이다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    그는 반갑게 웃으며 아무렇지도 않다는 듯 당신에게 말을 건넨다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    형, 일어났어? 다행이다. 얼마나 잤는지 알아? 걱정했어. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    운은 PC 옆에 쭈그려 앉아서 물을 내밀며 이야기를 시작한다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    당신은 그의 전화를 받지 않았다. 그야 당연한 일이다. 그는 당신의 스토커니까. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    하지만 이런 일까지 벌일 줄은? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    이 상황에서 물이 넘어가겠습니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그러게 전화를 받지 그랬어.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    받았으면 이런 일도 안 벌였을 거 아냐. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    내가 얼마나 걱정했다고. 무슨 일이라도 일어난 거 아닌가 싶어서. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...이거 풀어주시죠. 엄연히 범죄입니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (토할 것 같다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    아직은 안 돼. 풀어주면 또 도망칠 거잖아. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    그게 중요합니까? 신고할 겁니다, 당신. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그렇게 말하면 더더욱 풀어줄 수가 없잖아. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    풀어줄 생각은 있습니까? (운에게는 시선도 두지 않은 채, 어떻게 풀고 나갈지 티 내지 않고 머리를 굴리고 있다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=80 설득 (1D100&lt;=80) 보너스, 패널티 주사위[0] ＞ 93 ＞ 93 ＞ 실패
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=90 관찰력 (1D100&lt;=90) 보너스, 패널티 주사위[0] ＞ 89 ＞ 89 ＞ 보통 성공
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    책상 위, 가위가 닿을 것 같은 거리다.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    하지만 그의 앞에서 자연스럽게 가져갈 수는 없을 것 같다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (우선 그를 이 공간에서 잠깐이라도 내보내야겠는데.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    영화라도 볼까? 어때? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    좋아하는 장르 있어? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (안색이 좋지 않다. 우선 좀 맞춰줘야 할까. 주먹을 꽉 쥔다.) 잔잔한 거로 하죠.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    잔잔한 거... 형 다운 픽이네. 난 별로 좋아하진 않지만. 형한테 맞춰줄까나. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    (PC를 조작해 넷O릭스를 켜 스크롤을 내리며 영화를 찾는다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (시선이 넘어간 틈을 타 가위에 조용히 가위에 손을 뻗는다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    【여명, 은밀행동 판정.】 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=20 은밀행동 (1D100&lt;=20) 보너스, 패널티 주사위[0] ＞ 76 ＞ 76 ＞ 실패
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=70 민첩 (1D100&lt;=70) 보너스, 패널티 주사위[0] ＞ 89 ＞ 89 ＞ 실패
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    부스럭, 거슬리는 소리가 들리자 운은 고개를 들려 당신을 바라본다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    ...... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    탈출하려고 했어? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...화장실이 가고 싶습니다만.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    아직은 안 되는데. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    영화 한 편 다 볼때까지는 괜찮지 않을까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그리고 가고 싶다면 그냥 나한테 말하지 그랬어. 몰래 그러지 말고. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (손목이 묶여 있는 데다 어딘지 모를 장소까지 와 있으니 점점 짜증이 몰려온다. 내가 대체 왜 여기서.)  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    가고 싶다고 말하면 풀어 줍니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    이번엔 거짓말인 것 같으니까 아니. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    처음부터 얘기했으면 풀어줬을 거야. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    흐음... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    (대충 스크롤을 굴리다, 아무 영화나 틀어놓고 당신을 물끄럼히 바라본다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    보고 있어. 잠깐 갔다 올테니까.  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...그러죠.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    이상한 짓은 하려고 하지 말고. (침대 위의 가위를 멀리 치워놓는다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    운은 방 문을 열고 밖으로 나갑니다. 다른 방으로 연결되어 있는 것 같습니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    하아... (깊은 한숨을 뱉어낸다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (아까보다 안색이 좋지 않다. 당장이라도 옷이고 뭐고 다 버려버리고 씻고 싶다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    문은 총 두 개가 있는데, 어디로 통하는지는 알 수 없습니다. 둘 다 방문으로 보입니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    관찰 판정이 가능합니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (...구조가 어떻게 되는 거지?) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=90 관찰력 (1D100&lt;=90) 보너스, 패널티 주사위[0] ＞ 30 ＞ 30 ＞ 어려운 성공
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    케이블 타이가 프레임에 걸린 방식을 보니 각도를 잘 틀면 빠져나올 수 있을 것 같습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    그리고, 방문을 자세히 살펴보니 문 하나는 화장실로 통하는 문이라는 것을 알 수 있습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    운이 방금 들어간 문은 화장실 문입니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (이때를 기회로 조용히 손목을 움직여 케이블 타이를 빼낸다. 여전히 묶여 있는 것 같은 느낌... 손목이 꼭 자기 것이 아닌 것 같다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    【여명, 민첩 판정】 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=70 민첩 (1D100&lt;=70) 보너스, 패널티 주사위[0] ＞ 34 ＞ 34 ＞ 어려운 성공
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    손목이 빨개지긴 했지만, 무사히 빠져나왔습니다.  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (벌겋게 부어오른 손목을 제 손으로 만지려다 만다. ...씻고 싶군. ...우선 남은 문으로 가봐야 하나.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    은밀행동 판정이 가능합니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=20 은밀행동 (1D100&lt;=20) 보너스, 패널티 주사위[0] ＞ 40 ＞ 40 ＞ 실패
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    삐걱, 의자에서 거슬리는 커다란 소리가 울려퍼지고, 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    화장실 문이 벌컥 열립니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    운은 당신의 풀린 손목을 바라보더니 미묘한 표정을 짓습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    심리학 판정이 가능합니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=70 심리학 (1D100&lt;=70) 보너스, 패널티 주사위[0] ＞ 11 ＞ 11 ＞ 대단한 성공
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    그는 상처받은 표정입니다... 화난 게 아니라, 서운해하고 있습니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...역겹게. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (뭘 잘했다고 저딴 표정을.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    가려고? 너무해... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    며칠동안 전화도 안 받았으면서, 벌써 가려는 거야? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    내가 여기 납치되어있는 기간이 늘어나면 당신 죄만 더 무거워질텐데. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    하지만 저번에 형이 날 신고했는데도 난 멀쩡했는걸. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    딱히 죄가 아닌 거 아냐? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    멀쩡했다 해서 죄가 아닌 거겠습니까?  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (말을 한다 해도 어차피 저 범죄자는 모를 것이 뻔했다.) ...비켜요. 때리고 싶은 걸 참고 있으니까.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    싫은데. 비키면 나갈 거잖아. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    비키라니까. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    당신이랑 같은 곳에서 숨 쉬고 있는 것만으로도 구역질이 납니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    말을 왜 그렇게... 너무하잖아. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    비키라고 했습니다.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    싫어. 형은 자기 맘대로만 하려고 해. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    멋대로 행동하고 있는 게 누굽니까, 지금?  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    으음~ 아무튼 싫어.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    영화 정도는 한 편 보고 가도 되잖아. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    싫습니다. 그 말을 믿겠습니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    음~ 그렇긴 해. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    영화 한 편 보면 밥이나 한 끼 먹고 가라고 할거고... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그럼 늦었으니 자고 가라고 할 거고... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    하지만 그게 나쁜 건 아니잖아? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    상대 허락이 필요한 일입니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    뭐 그렇기야 하지만. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    이렇게 안 하면 형은 절대 나랑 같이 이런 거 안 해 줄 거잖아? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그러니까 어쩔 수 없단 말이지~ 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    어린 아이도 이 정도면 알아듣겠습니다.  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (같은 한국인이 맞나 의문이 들 정도로 말이 통하지를 않는다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (역시 무력으로 제압하는 수 밖에. 닿는 것도 싫은 상대지만 빠르게 그의 명치 부근에 주먹을 휘두른다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=50 근접전(격투) (1D100&lt;=50) 보너스, 패널티 주사위[0] ＞ 84 ＞ 84 ＞ 실패
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    윽! 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    (재빠르게 피한 뒤, 당신을 잡아채며 상처받은 표정을 한다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...놓으시죠. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    때리려고 했잖아. 싫어. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    때리게 만든 게 누굽니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    난 별 거 안 했어. (억울한 표정이다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    납치하는 건 괜찮고, 때리는 건 안 됩니까? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    놓으세요. 토할 것 같으니까. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    뭐만 하면 토할 것 같다 그러고. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    나도 그러면 상처받는다고... 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (안색이 새파랗게 질린다.) 이기적이군요. 제 안색은 보이지도 않습니까?  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    놓아줄 거긴 한데, 못 나가게는 해야겠어. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    으음... 내가 닿지만 않으면 되는 거잖아? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    이 공간에 있는 것 자체가 싫습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그건 안타깝지만 어쩔 수 없는 일이고. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (여기 있는 물건들 모두, 저 사람의 것이겠지. 아니, 저 사람이든 누구든 상관 없다. 그저 내 공간이 아니라는 것이, 더 소름이니까.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    (당신을 질질 끌어 다시 처음 앉아있던 의자에 앉히고, 케이블 타이를 꺼내 다시 당신의 손목을 조인다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    (까가각, 거슬리는 소리가 방 안을 메운다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (...너무 자극해버렸군. 벌겋게 달아오른 손목에 있는 이물질을 바라본다.) 손목 아픕니다만.  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    좋아하는 사람을 이렇게 대해도 되는 겁니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    형이 못된 짓만 하니까 어쩔 수 없어. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (범죄를 저지르고 있는 사람이 누군데.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+     
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (하아, 깊은 한숨을 뱉는다. 짜증나지만 우선 나가는 게 급하니.)  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=70 심리학 (1D100&lt;=70) 보너스, 패널티 주사위[0] ＞ 71 ＞ 71 ＞ 실패
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=70 심리학 (1D100&lt;=70) 보너스, 패널티 주사위[0] ＞ 38 ＞ 38 ＞ 보통 성공
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    이 사람은 자기가 뭘 잘못하고 있는지 정말로 모릅니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    죄책감이 없는 게 아니라 문제 자체를 인식하지 못하고 있습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    직접적인 대립보다, 차분한 설명이 효과적일 것 같습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    감정적인 호소보다, 차분하고 논리적인 설명이 훨씬 효과적일 것 같습니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (자기 답지 않게 감정적으로 몰아가긴 했다. 하지만 이 공간은 도저히..., 힘들군.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...아까도 말했지만 이건 감금죄 입니다. 그때와는 달라요. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    당신이 저를 좋아하든 싫어하든, 그건 당신 감정이지 제 감정이 아닙니다.  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=80 설득 (1D100&lt;=80) 보너스, 패널티 주사위[0] ＞ 97 ＞ 97 ＞ 실패
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    아냐...? 난 그런 뜻 아니었어. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    감금하려는 것도 아니었고. 감정을 밀어붙이려는 것도 아냐. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    그럼 뭡니까. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    으음... 그냥 가볍게 데이트가 하고 싶었던 것 뿐? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    라기보단, 이렇게 안 하면 연락도 안 받아주니까 어쩔 수 없었던 것 뿐이라구... (툴툴거린다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    의도가 어떻든 제가 동의하지 않았고, 서로 의견도 맞추지 않고 낯선 공간에 묶여 있는 게 감금이 아니면 뭡니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    으으음... 그건 알겠어, 내 의도가 중요하진 않다는 거지? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    하지만 그럼 어떻게 하는데? 그러면 난 어떻게 형이랑 대화를 해? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    이 상황에서 대화가 가능하다고 생각합니까? 대화도 동의가 필요합니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=80 설득 (1D100&lt;=80) 보너스, 패널티 주사위[0] ＞ 7 ＞ 7 ＞ 대단한 성공
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    ...가능할 수도 있지. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...가능하지 않습니다만.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    ...알았어. 알았다고... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    (침대 위에 올려져있던 가위를 들고 와, 빡빡하게 묶여 있던 케이블 타이를 잘라준다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (...낯선 공간은 역시 버티기 힘들군. 가만히 제 부어오른 손목을 바라본다. ...여전히 헛구역질이 나올 것 같다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    (살짝 비껴 서서, 나가라는 듯 당신을 물끄럼히 바라본다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...하. (기분도 컨디션도 좋지 않은 듯 지친듯한 표정을 짓는다. 이것이 아주 미세하게 티가 난다. 운을 바라보지도 않은 채 문 바깥으로 나간다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    여명은 방 밖을 빠져나가, 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    거실로 나가서, 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    굳게 닫힌 현관문을 열고 밖으로 나섭니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    길게 이어진 복도를 걸어가다, 잠깐 뒤를 돌아보면. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    운이 문틈에 서서 당신을 바라보고 있습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    따라오지는 않지만, 표정은 애매합니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    잘못을 이해한 건지, 아직도 잘 모르는건지.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    찜찜함만을 남기고... 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    1D3 (1D3) ＞ 2
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>system</span> :
+  <span>
+    [ 차여명 ] 이성 : 75 → 77 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    여운은, 아마도. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    다음에 당신에게 또 연락해올 겁니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    클리어 엔딩 A — 「그러니까 말하라고」 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (저 사람은 어떤 환경에서 뭘 학습하면 이렇게 되는 건지. 의문은 들었지만 곧장 집으로 향했다. 당장 씻고 싶었기 때문에.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    ---------------------------------------------------------------- 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    처음 문자가 온 건 나흘 전이었습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    모르는 번호. 하지만, 누군지 알 것 같은 내용. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    처음엔 차단하면 끝날 줄 알았겠죠. 하지만 이번으로 네 개의 번호를 차단했고, 오늘도 새 번호로 문자가 왔습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    보낸 내용들을 쭉 읽어보면, 이 사람은 당신이 어디있는지 알고 있는 것 같습니다... 이상하게도요. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (...시간이 아깝지도 않은지.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    오늘 저녁, 퇴근 길. 이제 슬슬 후덥지근해지는 공기가 불쾌합니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    늦은 시간의 사무실 건물 앞에서, 또다시 핸드폰에 떠오르는 문자. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    &quot;오늘도 늦게까지 일했네.&quot; 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    당신은 지금 막 건물 밖으로 나온 참입니다...  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (핸드폰을 확인하면 가만히 서 있는다. ...피곤하군.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (무시하기를 수십 번, 현 상황을 파악하기 위해 문자에 답장을 보낸다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    &quot;근처입니까?&quot; 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    &quot;응. 지켜보고 있어.&quot; 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    짧지만 섬뜩한 문자입니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    &quot;다가가진 않을 거야. 형이 싫어하니까.&quot; 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    &quot;천천히 거리를 좁히자!&quot; 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    &quot;그건 제가 동의한 부분이 아닙니다만.&quot; 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    &quot;저번처럼 막무가내로 가까워지는 것보단 훨씬 낫잖아.&quot; 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    &quot;지금 이 행동도 스토킹의 일종입니다만.&quot; 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (애초에 말이 통할 상대가 아닌 걸 알기에, 그대로 폰을 넣고 발걸음을 옮긴다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    지잉, 지잉, 주머니에서 끊임없이 핸드폰이 울립니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    한참이나 울리던 핸드폰은, 곧 조용해집니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (잠깐 폰을 꺼내 보고는, 고개를 들어 주위를 보다 다시 발걸음을 옮긴다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    마지막 문자 내용은, 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    &quot;조심히 들어가!&quot; 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (누가 제일 위험한지. 폰을 확인하면 들어와 있는 문자에 미간을 찌푸린다.) 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (...집 안까지 따라오는 건 아니라 다행이라는 생각이 드는 것에 기분이 묘하다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    여명이 집으로 들어서면, 주머니에 넣어뒀던 핸드폰이 요란하게 울립니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    전화입니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    번호는, 아까 온 문자와 같습니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (한숨을 내쉬고는, 전화를 받는다.) 말씀하시죠.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    아, 받았다. 안 받을 줄 알았는데. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    자꾸 차단하길래 걱정했잖아. 번호 새로 만드는 것도 이젠 힘들어. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (통제하기 어려운 상황이 생기는 것보단 나으니까.)  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    비효율적인 행동을 자주 하는군요. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    감정이란 건 원래 비효율적인 거잖아. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그리고 나 다 기억한다구. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    형이 그 때 나 도와줬던 거랑, 손수건 줬던 거랑... 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    비효율적이라고 하면서 감정으로 움직이잖습니까. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    그 때 일과는 전혀 연관이 없죠. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    왜 연관이 없어?  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    당신이 의미를 붙인 것이지, 제가 준 것이 아니니까요. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=80 설득 (1D100&lt;=80) 보너스, 패널티 주사위[0] ＞ 10 ＞ 10 ＞ 대단한 성공
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    으음... 그런가? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    하지만 내 의미도 나름대로 이유가 있는걸? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    어쨌든 그 때 일 덕분에 내가 형을 좋아하게 된 걸. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그리고 날 또 위로해 줬잖아. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    저는 그 때 상황도 잘 기억나지 않습니다만. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    저를 좋아하게 된 건 당신 사정이지, 제 사정이 아닙니다.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그래, 그래서 나 혼자 어떻게든 해보려고 이러고 있는 거잖아. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    형이 날 안 좋아해도 괜찮아. 내가 다 기억하고 내가 더 좋아하면 되니까. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    그래서, 계속 이렇게 몰래 쫓아다니고 연락할 겁니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    응. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    전에도 말씀 드렸지만, 저는 스토킹에 대해 동의하지 않았습니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    상대 동의도 필요하다고 말씀 드렸을텐데요. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그치만 이렇게라도 안 하면 형이랑 나는 가까워질 일이 없잖아? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    혼자 연락하고, 따라다니는 것이 가까워지는 일 입니까. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    연락도 안 하고, 따라다니지도 않으면 가능성이 0인데, 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    이렇게라도 하면 1%라도 생기는 거잖아. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    난 거기에 다 건 거야. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    플러스가 아닌, 마이너스에 속하는 행동입니다만. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=70 심리학 (1D100&lt;=70) 보너스, 패널티 주사위[0] ＞ 89 ＞ 89 ＞ 실패
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    딱히 악의가 있어 보이진 않습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    진심으로 하는 말 같아요. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    마이너스도 어쨌든 감정이긴 감정이잖아. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    무관심보단 나아. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    감정만 내세우는 건 효과가 없습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그러면 어떻게 해야 하는데? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    알려줘. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    연락 빈도를 줄이고, 범죄가 아닌 방법을 시도해야겠죠. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=80 설득 (1D100&lt;=80) 보너스, 패널티 주사위[0] ＞ 8 ＞ 8 ＞ 대단한 성공
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그러면 날 좋아해줄 거야? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    그건 제 개인 영역이지, 당신 영역이 아닙니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    제가 당신한테 저를 좋아해주십시오, 라고 한 적 있습니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    없긴 하지... 하지만... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    알았어. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    연락을 좀 줄일게. 그럼 될까? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    연락을 줄이고, 따라다니는 것도 줄이시죠.  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    그렇게 하면 범죄가 아닐 테니까요.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    으응... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    하지만 보고 싶을 땐 어떡해? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    참을 줄도 알아야겠죠. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    ...응. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그럼 전화도 이제 끊는 게 좋을까? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    할 말이 더 남았습니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    하려면 잔뜩 할 순 있지. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그치만 싫어할 거잖아. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    1분 이내로 하죠. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    알았어. 으음... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    정말 좋아해. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    알고 있습니다만. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    그게 다입니까? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    막상 얘기하라고 하니까 뭘 해야 될지 잘 모르겠어. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    형이랑 얘기하면 뭐든 즐거울 텐데. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    아, 그러고보니. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    오늘 셔츠 잘 어울리더라. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (대체 어디 숨어서 본 건지.)  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    이제 끊겠습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    으응. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    잘 자. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...네. (전화를 끊는다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    ------------------------------------------------------------- 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    다음 날. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    여느 때와 똑같은 날이지만, 문자가 오지 않습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    당신은 오늘의 업무를 끝내고, 가벼운 발걸음으로 회사를 나섭니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    회사 로비에 발걸음을 내딛자마자 본 것은. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    헤헤. 와버렸어. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    분홍색 머리의 남자. 여운입니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    그는 웃고 있습니다. 위협하는 기색은 없습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    오히려 반갑다는 얼굴로 한 손을 들어 흔들고 있습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    반대편 손엔 편의점 봉투가 있습니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    (짧은 한숨을 내쉬며 미간을 찌푸린 채 당신을 바라본다.)  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    화내지 마. 그래도 오늘은 문자는 최대한 참았어. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    하나도 안 보냈다고. 잘하지 않았어? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...만나자는 약속을 하지 않았습니다만.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    안 받아줄 거잖아? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    멋대로 찾아오는 것도 안됩니다.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    안 되는 것 밖에 없어. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    상식적인 걸 말씀드리는 겁니다만. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...참은 건 잘 했습니다. (여전히 미간을 찌푸린 채다.) 하지만 무단으로 찾아오는 건 곤란합니다. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=80 설득 (1D100&lt;=80) 보너스, 패널티 주사위[0] ＞ 97 ＞ 97 ＞ 실패
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    무단이 아니면 되는 거야? 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    말하고 오면 돼? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    말하고, 제가 동의하면 만나는 겁니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    동의 안 할 거잖아. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    한번도 안 해줄 거잖아. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...그건 때에 따라 다르겠죠. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    cc&lt;=80 설득 (1D100&lt;=80) 보너스, 패널티 주사위[0] ＞ 18 ＞ 18 ＞ 어려운 성공
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    ......내가 이상한 거야? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    멋대로 찾아오는 건 잘못된 행동이죠. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    당신과 제 사이가 가깝다면 모르겠으나. (애초에 자신은 사람을 가까이 두지 않기에 그럴 일은 없을 것이다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    ... 알았어. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    적어도 얘기라도 하고 올게. 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    얘기하고, 동의하면 오시죠.  
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    그리고 만날 거라면 회사보다는 밖이 낫습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    알았어.  
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    음... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    그럼 이제 가는 게 좋겠지? 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    ...그러시죠. (당신이 들고 있는 편의점 봉투로 시선이 갔다가 만다.) 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>여 운</span> :
+  <span>
+    응. 그럼... 좋은 밤 보내. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    여운이 돌아서서 걸어갑니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    걷던 여운은 골목 끝에서 한 번 뒤를 보고, 곧 사라집니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    당신은 혼자 남습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    완전히 끝난 건지 알 수 없습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    당신은 집으로 들어가 차곡차곡 문을 잠급니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    그날 밤엔, 문자가 오지 않았습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    이성 획득, 1d4 
+  </span>
+</p>
+
+<p style="color:#e0e0e0;">
+  <span> [main]</span>
+  <span>차여명</span> :
+  <span>
+    1D4 (1D4) ＞ 4
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>system</span> :
+  <span>
+    [ 차여명 ] 이성 : 77 → 81 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    당신은 연락이 없는 게 안심이 되는지... 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    아니면 또다른 불안 요소인지. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    구분되지 않습니다. 
+  </span>
+</p>
+
+<p style="color:#888888;">
+  <span> [main]</span>
+  <span>GM</span> :
+  <span>
+    클리어 엔딩 A — 「조건부 종전」 
+  </span>
+</p>
+
+  </body>
+</html></script>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- parsing ---------------- */
+  var CHAR_PALETTE = ['#c98a7d','#7d95c9','#a3c97d','#c9a15a','#9d7dc9','#7dc9b0','#c97dae','#b3c97d'];
+
+  /* 판정/주사위 결과 인식
+     ccfolia 다이스봇(BCDice)은 시스템이 뭐든 "＞"로 굴림 과정을 이어붙여 보여줘요.
+     "cc<=80"처럼 CoC 전용 표기에만 기대면 다른 시스템(더블크로스 등) 로그를 놓치니까,
+     이 화살표 기호 하나를 공통 신호로 잡고 판정을 감지해요. */
+  var KNOWN_RESULTS = ['대성공','크리티컬','스페셜','펌블','파멸적 실패','치명적 실패','어려운 성공','보통 성공','성공','실패'];
+
+  function extractResult(text){
+    for(var i=0;i<KNOWN_RESULTS.length;i++){
+      if(text.indexOf(KNOWN_RESULTS[i])!==-1) return {label:KNOWN_RESULTS[i], known:true};
+    }
+    var mv = text.match(/＞\s*([^＞]+?)\s*$/);
+    if(mv && mv[1].trim()) return {label:mv[1].trim(), known:false};
+    return {label:'결과', known:false};
+  }
+  function isFailResult(label){
+    return label==='실패' || label==='펌블' || label==='치명적 실패' || label==='파멸적 실패';
+  }
+  function looksLikePureDice(s){
+    return /^[\dD＞（）\(\)+\-<>=~\/\s]+$/i.test(s);
+  }
+  function extractSkill(text){
+    // 앞쪽에 "cc<=80"류 판정식 접두가 붙어있으면 걷어내고 그 뒤 스킬명을 찾아요.
+    var stripped = text.replace(/^[a-zA-Z가-힣]{0,6}\s*[<>=]{1,2}\s*\d+\s*/, '');
+    var m = stripped.match(/^([^\(（＞]+)[\(（]/);
+    if(m && m[1].trim() && !looksLikePureDice(m[1])) return m[1].trim();
+    var m2 = text.match(/^([^＞]+?)＞/);
+    if(m2){
+      var candidate = m2[1].replace(/[\(（][^)）]*[)）]/g, '').trim();
+      if(candidate && candidate.length < 24 && !looksLikePureDice(candidate)) return candidate;
+    }
+    return '주사위';
+  }
+
+  var GM_NAME_HINTS = ['gm','게임마스터','마스터','키퍼','keeper','kp','내레이터','narrator'];
+
+  // GM마다 엔딩을 부르는 말이 달라서(엔딩/결말/커튼콜/THE END 등) 키워드를 넓게 잡아요.
+  // 여기 못 걸려도 재생이 깨지진 않고, 그냥 평범한 서술문으로 보일 뿐이에요.
+  var ENDING_HINTS = ['엔딩','결말','커튼콜'];
+  function isEndingLine(text){
+    for(var i=0;i<ENDING_HINTS.length;i++){ if(text.indexOf(ENDING_HINTS[i])!==-1) return true; }
+    return /(^|[^a-z])(the end|fin)([^a-z]|$)/i.test(text);
+  }
+
+  function classify(speaker, text, gmSet){
+    if(speaker === 'system'){
+      var m = text.match(/\[\s*(.+?)\s*\]\s*(.+?)\s*[:：]\s*(\d+)\s*→\s*(\d+)/);
+      if(m) return {type:'system', speaker:speaker, text:text, character:m[1], stat:m[2], from:m[3], to:m[4]};
+      return {type:'system', speaker:speaker, text:text};
+    }
+    if(/^-{3,}$/.test(text)) return {type:'divider'};
+    if(/＞/.test(text)){
+      var res = extractResult(text);
+      return {type:'judgement', speaker:speaker, text:text, skill:extractSkill(text), result:res.label, resultKnown:res.known};
+    }
+    if(gmSet && gmSet.has(speaker)){
+      if(/^【.+】$/.test(text)) return {type:'cue', speaker:speaker, text:text};
+      if(isEndingLine(text)) return {type:'ending', speaker:speaker, text:text};
+      return {type:'narration', speaker:speaker, text:text};
+    }
+    return {type:'dialogue', speaker:speaker, text:text};
+  }
+
+  // Phase 1: extract raw {speaker, text} entries only — no GM assumptions yet.
+  function parseRawEntries(htmlString){
+    var doc = new DOMParser().parseFromString(htmlString, 'text/html');
+    var paragraphs = doc.querySelectorAll('p');
+    var entries = [];
+    paragraphs.forEach(function(p){
+      var spans = p.querySelectorAll('span');
+      if(spans.length < 2) return;
+      var speaker = spans[spans.length-2].textContent.trim();
+      var text = spans[spans.length-1].textContent.replace(/\s+/g,' ').trim();
+      if(!text) return;
+      entries.push({speaker:speaker, text:text});
+    });
+    return entries;
+  }
+
+  // Phase 2: classify raw entries using the current GM selection,
+  // letting per-line manual overrides (from Advanced mode) win over auto-detection,
+  // and attaching a chosen expression to dialogue/judgement beats when set.
+  function buildBeats(rawEntries, gmSet, overrides, exprOverrides, bgOverrides, bgmOverrides){
+    var out = [];
+    rawEntries.forEach(function(e, i){
+      var forced = overrides ? overrides[i] : undefined;
+      var beat;
+      if(forced === 'skip') return;
+      else if(forced === 'dialogue'){ beat = {type:'dialogue', speaker:e.speaker, text:e.text}; }
+      else if(forced === 'narration'){ beat = {type:'narration', speaker:e.speaker, text:e.text}; }
+      else if(forced === 'ending'){ beat = {type:'ending', speaker:e.speaker, text:e.text}; }
+      else{ beat = classify(e.speaker, e.text, gmSet); }
+      if((beat.type === 'dialogue' || beat.type === 'judgement') && exprOverrides && exprOverrides[i]){
+        beat.expression = exprOverrides[i];
+      }
+      if(bgOverrides && bgOverrides[i]) beat.bgChange = bgOverrides[i];
+      if(bgmOverrides && bgmOverrides[i]) beat.bgmChange = bgmOverrides[i];
+      out.push(beat);
+    });
+    return out;
+  }
+
+  function uniqueSpeakers(rawEntries){
+    var seen = [];
+    rawEntries.forEach(function(e){
+      if(e.speaker !== 'system' && seen.indexOf(e.speaker) === -1) seen.push(e.speaker);
+    });
+    return seen;
+  }
+
+  function guessGM(speakerList){
+    var guessed = [];
+    speakerList.forEach(function(name){
+      var norm = name.replace(/\s+/g,'').toLowerCase();
+      if(GM_NAME_HINTS.indexOf(norm) !== -1) guessed.push(name);
+    });
+    // fallback: if nothing matched, don't guess — let the user pick manually.
+    return guessed;
+  }
+
+  function buildCharColors(beats){
+    var colors = {};
+    var order = [];
+    beats.forEach(function(b){
+      if((b.type==='dialogue' || b.type==='judgement') && b.speaker && order.indexOf(b.speaker)===-1){
+        order.push(b.speaker);
+      }
+    });
+    order.forEach(function(name, i){
+      colors[name] = customColors[name] || CHAR_PALETTE[i % CHAR_PALETTE.length];
+    });
+    return colors;
+  }
+
+  /* ---------------- setup view wiring ---------------- */
+  var dropzone = document.getElementById('dropzone');
+  var fileInput = document.getElementById('fileInput');
+  var pasteArea = document.getElementById('pasteArea');
+  var parseBtn = document.getElementById('parseBtn');
+  var sampleBtn = document.getElementById('sampleBtn');
+  var errorMsg = document.getElementById('errorMsg');
+  var previewPanel = document.getElementById('previewPanel');
+  var statBeats = document.getElementById('statBeats');
+  var statJudge = document.getElementById('statJudge');
+  var statChar = document.getElementById('statChar');
+  var castList = document.getElementById('castList');
+  var playBtn = document.getElementById('playBtn');
+
+  var currentBeats = null;
+  var currentColors = null;
+  var currentRawEntries = null;
+  var currentGMSet = null;
+  var currentSpeakers = null;
+  var lineOverrides = {};
+  var lineExpressionOverrides = {};
+  var lineBgOverrides = {};
+  var lineBgmOverrides = {};
+  var customColors = {}; // { name: '#rrggbb' } — user-picked overrides for the auto palette
+  var charExpressions = {}; // { name: { order:['기본','웃음',...], images:{label: dataURL} } }
+
+  function showError(msg){
+    errorMsg.textContent = msg;
+    errorMsg.hidden = false;
+    previewPanel.hidden = true;
+  }
+  function hideError(){ errorMsg.hidden = true; }
+
+  function ensureCharExpr(name){
+    if(!charExpressions[name]) charExpressions[name] = {order:[], images:{}};
+    return charExpressions[name];
+  }
+  function setExpressionImage(name, label, dataUrl){
+    var ce = ensureCharExpr(name);
+    if(ce.order.indexOf(label) === -1) ce.order.push(label);
+    ce.images[label] = dataUrl;
+  }
+  function removeExpressionImage(name, label){
+    var ce = charExpressions[name];
+    if(!ce) return;
+    var idx = ce.order.indexOf(label);
+    if(idx !== -1) ce.order.splice(idx, 1);
+    delete ce.images[label];
+  }
+  function defaultExpressionImage(name){
+    var ce = charExpressions[name];
+    if(ce && ce.order.length) return ce.images[ce.order[0]];
+    return null;
+  }
+  function readImageFile(file, cb){
+    var reader = new FileReader();
+    reader.onload = function(ev){ cb(ev.target.result); };
+    reader.onerror = function(){ showError('이미지를 불러오지 못했어요. 다른 이미지로 다시 시도해주세요.'); };
+    reader.readAsDataURL(file);
+  }
+  function labelFromFilename(filename){
+    var base = String(filename || '').replace(/\.[^.]+$/, '').trim();
+    return base || '표정';
+  }
+  function uniqueExpressionLabel(name, desired){
+    var ce = ensureCharExpr(name);
+    var label = desired, n = 2;
+    while(ce.order.indexOf(label) !== -1){ label = desired + n; n++; }
+    return label;
+  }
+
+  // Handles one or many dropped/selected image files at once.
+  // Single file on a character with no expressions yet -> becomes "기본" automatically.
+  // Single file otherwise -> asks for a name once.
+  // Multiple files -> named straight from each filename, no prompts (so drag-dropping
+  // a whole folder of expression art just works).
+  function addExpressionFiles(name, fileList, strip, avatarBtn){
+    var files = Array.prototype.slice.call(fileList || []).filter(function(f){
+      return f.type.indexOf('image/') === 0;
+    });
+    if(!files.length) return;
+
+    function finish(){
+      if(strip) renderExpressionStrip(strip, name, avatarBtn);
+      syncAvatarPreview(name, avatarBtn);
+    }
+
+    if(files.length === 1){
+      var ce = ensureCharExpr(name);
+      var isFirst = ce.order.length === 0;
+      var label;
+      if(isFirst){
+        label = '기본';
+      }else{
+        var typed = window.prompt(name + '의 새 표정 이름을 입력하세요 (예: 웃음, 놀람, 화남)', '표정' + (ce.order.length + 1));
+        if(!typed) return;
+        label = typed.trim() || '표정' + (ce.order.length + 1);
+      }
+      label = uniqueExpressionLabel(name, label);
+      readImageFile(files[0], function(dataUrl){
+        setExpressionImage(name, label, dataUrl);
+        finish();
+      });
+      return;
+    }
+
+    var idx = 0;
+    function next(){
+      if(idx >= files.length){ finish(); return; }
+      var file = files[idx++];
+      var label = uniqueExpressionLabel(name, labelFromFilename(file.name));
+      readImageFile(file, function(dataUrl){
+        setExpressionImage(name, label, dataUrl);
+        next();
+      });
+    }
+    next();
+  }
+
+  /* ---------------- background & BGM libraries ---------------- */
+  var bgLibrary = {order:[], images:{}};
+  var bgmLibrary = {order:[], items:{}}; // items[label] = {type:'file'|'url'|'youtube', src, videoId}
+
+  function setBgImage(label, dataUrl){
+    if(bgLibrary.order.indexOf(label) === -1) bgLibrary.order.push(label);
+    bgLibrary.images[label] = dataUrl;
+  }
+  function removeBgImage(label){
+    var idx = bgLibrary.order.indexOf(label);
+    if(idx !== -1) bgLibrary.order.splice(idx, 1);
+    delete bgLibrary.images[label];
+  }
+  function uniqueLibLabel(order, desired){
+    var label = desired, n = 2;
+    while(order.indexOf(label) !== -1){ label = desired + n; n++; }
+    return label;
+  }
+  function addBgFiles(fileList){
+    var files = Array.prototype.slice.call(fileList || []).filter(function(f){
+      return f.type.indexOf('image/') === 0;
+    });
+    if(!files.length) return;
+    if(files.length === 1){
+      var suggested = labelFromFilename(files[0].name);
+      var typed = window.prompt('이 배경의 이름을 입력하세요', suggested);
+      if(!typed) return;
+      var label = uniqueLibLabel(bgLibrary.order, typed.trim() || suggested);
+      readImageFile(files[0], function(dataUrl){ setBgImage(label, dataUrl); renderBgStrip(); });
+      return;
+    }
+    var idx = 0;
+    function next(){
+      if(idx >= files.length){ renderBgStrip(); return; }
+      var file = files[idx++];
+      var label = uniqueLibLabel(bgLibrary.order, labelFromFilename(file.name));
+      readImageFile(file, function(dataUrl){ setBgImage(label, dataUrl); next(); });
+    }
+    next();
+  }
+  function renderBgStrip(){
+    var strip = document.getElementById('bgStrip');
+    if(!strip) return;
+    strip.innerHTML = '';
+    bgLibrary.order.forEach(function(label){
+      var chip = document.createElement('div');
+      chip.className = 'expr-chip';
+      chip.style.backgroundImage = 'url(' + bgLibrary.images[label] + ')';
+      chip.title = label + ' (클릭해서 이미지 교체)';
+      var labelEl = document.createElement('span');
+      labelEl.className = 'expr-label';
+      labelEl.textContent = label;
+      chip.appendChild(labelEl);
+      var removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'expr-remove';
+      removeBtn.textContent = '×';
+      removeBtn.title = label + ' 삭제';
+      removeBtn.addEventListener('click', function(e){ e.stopPropagation(); removeBgImage(label); renderBgStrip(); });
+      chip.appendChild(removeBtn);
+      var chipInput = document.createElement('input');
+      chipInput.type = 'file';
+      chipInput.accept = 'image/*';
+      chipInput.hidden = true;
+      chip.addEventListener('click', function(){ chipInput.click(); });
+      chipInput.addEventListener('change', function(e){
+        var file = e.target.files[0];
+        if(!file) return;
+        readImageFile(file, function(dataUrl){ setBgImage(label, dataUrl); renderBgStrip(); });
+      });
+      strip.appendChild(chip);
+      strip.appendChild(chipInput);
+    });
+    var addTile = document.createElement('button');
+    addTile.type = 'button';
+    addTile.className = 'expr-add';
+    addTile.textContent = '+';
+    addTile.title = '배경 추가 (여러 장 한 번에 선택 가능)';
+    var addInput = document.createElement('input');
+    addInput.type = 'file';
+    addInput.accept = 'image/*';
+    addInput.multiple = true;
+    addInput.hidden = true;
+    addTile.addEventListener('click', function(){ addInput.click(); });
+    addInput.addEventListener('change', function(e){ addBgFiles(e.target.files); addInput.value = ''; });
+    strip.addEventListener('dragover', function(e){ e.preventDefault(); strip.classList.add('dragover'); });
+    strip.addEventListener('dragleave', function(){ strip.classList.remove('dragover'); });
+    strip.addEventListener('drop', function(e){
+      e.preventDefault();
+      strip.classList.remove('dragover');
+      addBgFiles(e.dataTransfer.files);
+    });
+    strip.appendChild(addTile);
+    strip.appendChild(addInput);
+  }
+
+  function looksLikeYoutubeUrl(url){
+    return /youtu\.be|youtube\.com/i.test(String(url || ''));
+  }
+  function extractYoutubeId(url){
+    var str = String(url || '').trim();
+    if(!str) return null;
+    // try proper URL parsing first (handles any query-param order, extra tracking params, etc.)
+    try{
+      var withScheme = /^https?:\/\//i.test(str) ? str : 'https://' + str;
+      var u = new URL(withScheme);
+      var host = u.hostname.replace(/^www\.|^m\./i, '');
+      if(host === 'youtu.be'){
+        var short = u.pathname.replace(/^\//, '').split('/')[0];
+        if(/^[a-zA-Z0-9_-]{11}$/.test(short)) return short;
+      }
+      if(host === 'youtube.com'){
+        var vParam = u.searchParams.get('v');
+        if(vParam && /^[a-zA-Z0-9_-]{11}$/.test(vParam)) return vParam;
+        var pathMatch = u.pathname.match(/\/(?:embed|shorts)\/([a-zA-Z0-9_-]{11})/);
+        if(pathMatch) return pathMatch[1];
+      }
+    }catch(e){ /* fall through to regex below */ }
+    // fallback: loose regex for malformed/partial input
+    var m = str.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?.*?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+  function setBgmItem(label, item){
+    if(bgmLibrary.order.indexOf(label) === -1) bgmLibrary.order.push(label);
+    bgmLibrary.items[label] = item;
+  }
+  function removeBgmItem(label){
+    var idx = bgmLibrary.order.indexOf(label);
+    if(idx !== -1) bgmLibrary.order.splice(idx, 1);
+    delete bgmLibrary.items[label];
+  }
+  function readAudioFile(file, cb){
+    var reader = new FileReader();
+    reader.onload = function(ev){ cb(ev.target.result); };
+    reader.onerror = function(){ showError('오디오 파일을 불러오지 못했어요. 다른 파일로 다시 시도해주세요.'); };
+    reader.readAsDataURL(file);
+  }
+  function addBgmFiles(fileList){
+    var files = Array.prototype.slice.call(fileList || []).filter(function(f){
+      return f.type.indexOf('audio/') === 0 || /\.(mp3|ogg|wav|m4a)$/i.test(f.name);
+    });
+    if(!files.length) return;
+    var idx = 0;
+    function next(){
+      if(idx >= files.length){ renderBgmStrip(); return; }
+      var file = files[idx++];
+      var label = uniqueLibLabel(bgmLibrary.order, labelFromFilename(file.name));
+      readAudioFile(file, function(dataUrl){
+        setBgmItem(label, {type:'file', src:dataUrl});
+        next();
+      });
+    }
+    next();
+  }
+  function renderBgmStrip(){
+    var strip = document.getElementById('bgmStrip');
+    if(!strip) return;
+    strip.innerHTML = '';
+    bgmLibrary.order.forEach(function(label){
+      var item = bgmLibrary.items[label];
+      var chip = document.createElement('div');
+      chip.className = 'expr-chip bgm-chip';
+      chip.textContent = '🎵';
+      chip.title = label;
+      var typeBadge = document.createElement('span');
+      typeBadge.className = 'expr-type-badge';
+      typeBadge.textContent = item.type === 'youtube' ? 'YT' : (item.type === 'url' ? '링크' : '파일');
+      chip.appendChild(typeBadge);
+      var labelEl = document.createElement('span');
+      labelEl.className = 'expr-label';
+      labelEl.textContent = label;
+      chip.appendChild(labelEl);
+      var removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'expr-remove';
+      removeBtn.textContent = '×';
+      removeBtn.title = label + ' 삭제';
+      removeBtn.addEventListener('click', function(e){ e.stopPropagation(); removeBgmItem(label); renderBgmStrip(); });
+      chip.appendChild(removeBtn);
+      strip.appendChild(chip);
+    });
+    var addTile = document.createElement('button');
+    addTile.type = 'button';
+    addTile.className = 'expr-add';
+    addTile.textContent = '+';
+    addTile.title = 'BGM 파일 추가 (여러 곡 한 번에 선택 가능)';
+    var addInput = document.createElement('input');
+    addInput.type = 'file';
+    addInput.accept = 'audio/*';
+    addInput.multiple = true;
+    addInput.hidden = true;
+    addTile.addEventListener('click', function(){ addInput.click(); });
+    addInput.addEventListener('change', function(e){ addBgmFiles(e.target.files); addInput.value = ''; });
+    strip.addEventListener('dragover', function(e){ e.preventDefault(); strip.classList.add('dragover'); });
+    strip.addEventListener('dragleave', function(){ strip.classList.remove('dragover'); });
+    strip.addEventListener('drop', function(e){
+      e.preventDefault();
+      strip.classList.remove('dragover');
+      addBgmFiles(e.dataTransfer.files);
+    });
+    strip.appendChild(addTile);
+    strip.appendChild(addInput);
+  }
+
+  function tryParse(htmlString){
+    if(!htmlString || !htmlString.trim()){
+      showError('내용이 비어 있어요. 파일을 올리거나 로그 HTML을 붙여넣어주세요.');
+      return;
+    }
+    var raw;
+    try{
+      raw = parseRawEntries(htmlString);
+    }catch(e){
+      showError('로그를 읽는 중 문제가 생겼어요. 코코포리아 "로그 내보내기"로 저장한 HTML 파일이 맞는지 확인해주세요.');
+      return;
+    }
+    if(!raw.length){
+      showError('인식된 대사가 없어요. 코코포리아 로그 내보내기 형식(HTML)이 맞는지 확인해주세요.');
+      return;
+    }
+    hideError();
+    currentRawEntries = raw;
+    charExpressions = {};
+    lineOverrides = {};
+    lineExpressionOverrides = {};
+    lineBgOverrides = {};
+    lineBgmOverrides = {};
+    customColors = {};
+    bgLibrary = {order:[], images:{}};
+    bgmLibrary = {order:[], items:{}};
+    renderBgStrip();
+    renderBgmStrip();
+    var speakers = uniqueSpeakers(raw);
+    currentSpeakers = speakers;
+    currentGMSet = new Set(guessGM(speakers));
+    rebuildAndRenderPreview(speakers);
+  }
+
+  function rebuildAndRenderPreview(speakers){
+    var beats = buildBeats(currentRawEntries, currentGMSet, lineOverrides, lineExpressionOverrides, lineBgOverrides, lineBgmOverrides);
+    currentBeats = beats;
+    currentColors = buildCharColors(beats);
+    renderPreview(beats, currentColors, speakers);
+  }
+
+  function renderPreview(beats, colors, speakers){
+    var judgeCount = beats.filter(function(b){ return b.type==='judgement'; }).length;
+    var charCount = Object.keys(colors).length;
+    statBeats.textContent = beats.length;
+    statJudge.textContent = judgeCount;
+    statChar.textContent = charCount;
+
+    castList.innerHTML = '';
+    speakers.forEach(function(name){
+      var isGM = currentGMSet.has(name);
+      var row = document.createElement('div');
+      row.className = 'cast-row' + (isGM ? ' is-gm' : '');
+
+      var avatarBtn = document.createElement('button');
+      avatarBtn.type = 'button';
+      avatarBtn.className = 'cast-avatar';
+      avatarBtn.style.backgroundColor = colors[name] || customColors[name] || 'var(--edge)';
+      avatarBtn.title = isGM ? 'GM은 이미지를 쓰지 않아요' : (name + '의 기본 이미지');
+      avatarBtn.disabled = isGM;
+      syncAvatarPreview(name, avatarBtn);
+
+      var hiddenAvatarInput = document.createElement('input');
+      hiddenAvatarInput.type = 'file';
+      hiddenAvatarInput.accept = 'image/*';
+      hiddenAvatarInput.multiple = true;
+      hiddenAvatarInput.hidden = true;
+
+      var strip = null; // assigned below for non-GM rows; avatarBtn's listener closes over it
+
+      avatarBtn.addEventListener('click', function(){ if(!avatarBtn.disabled) hiddenAvatarInput.click(); });
+      hiddenAvatarInput.addEventListener('change', function(e){
+        addExpressionFiles(name, e.target.files, strip, avatarBtn);
+        hiddenAvatarInput.value = '';
+      });
+      if(!isGM){
+        avatarBtn.addEventListener('dragover', function(e){ e.preventDefault(); avatarBtn.classList.add('dragover'); });
+        avatarBtn.addEventListener('dragleave', function(){ avatarBtn.classList.remove('dragover'); });
+        avatarBtn.addEventListener('drop', function(e){
+          e.preventDefault();
+          avatarBtn.classList.remove('dragover');
+          addExpressionFiles(name, e.dataTransfer.files, strip, avatarBtn);
+        });
+      }
+
+      var main = document.createElement('div');
+      main.className = 'cast-main';
+
+      var nameLine = document.createElement('div');
+      nameLine.className = 'cast-name-line';
+      var nameLabel = document.createElement('span');
+      nameLabel.className = 'cast-name';
+      nameLabel.textContent = name;
+
+      var colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.className = 'cast-color';
+      colorInput.value = colors[name] || customColors[name] || (isGM ? '#9691a3' : '#c98a7d');
+      colorInput.title = name + (isGM ? '의 서술 색상' : '의 대사창 색상');
+      colorInput.addEventListener('input', function(){
+        customColors[name] = colorInput.value;
+        avatarBtn.style.backgroundColor = colorInput.value;
+        rebuildAndRenderPreview(speakers);
+      });
+
+      var gmToggle = document.createElement('label');
+      gmToggle.className = 'cast-gm-toggle';
+      var gmCheckbox = document.createElement('input');
+      gmCheckbox.type = 'checkbox';
+      gmCheckbox.checked = isGM;
+      gmCheckbox.addEventListener('change', function(){
+        if(gmCheckbox.checked){ currentGMSet.add(name); }
+        else{ currentGMSet.delete(name); }
+        rebuildAndRenderPreview(speakers);
+      });
+      gmToggle.appendChild(gmCheckbox);
+      gmToggle.appendChild(document.createTextNode('GM'));
+
+      nameLine.appendChild(nameLabel);
+      nameLine.appendChild(colorInput);
+      nameLine.appendChild(gmToggle);
+      main.appendChild(nameLine);
+
+      if(!isGM){
+        strip = document.createElement('div');
+        strip.className = 'expr-strip';
+        renderExpressionStrip(strip, name, avatarBtn);
+        main.appendChild(strip);
+      }
+
+      row.appendChild(avatarBtn);
+      row.appendChild(hiddenAvatarInput);
+      row.appendChild(main);
+      castList.appendChild(row);
+    });
+
+    previewPanel.hidden = false;
+    if(typeof previewPanel.scrollIntoView === 'function'){
+      previewPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+  }
+
+  function syncAvatarPreview(name, avatarBtn){
+    var img = defaultExpressionImage(name);
+    if(img){
+      avatarBtn.style.backgroundImage = 'url(' + img + ')';
+      avatarBtn.textContent = '';
+      avatarBtn.classList.add('has-image');
+    }else{
+      avatarBtn.style.backgroundImage = 'none';
+      avatarBtn.textContent = name.trim().charAt(0);
+      avatarBtn.classList.remove('has-image');
+    }
+  }
+
+  // Renders a character's row of expression thumbnails (+ an "add" tile) into `strip`.
+  // Each thumbnail replaces its own image on click; the × badge removes it.
+  function renderExpressionStrip(strip, name, avatarBtn){
+    strip.innerHTML = '';
+    var ce = charExpressions[name];
+    var order = ce ? ce.order : [];
+
+    order.forEach(function(exprLabel){
+      var chip = document.createElement('div');
+      chip.className = 'expr-chip';
+      chip.style.backgroundImage = 'url(' + ce.images[exprLabel] + ')';
+      chip.title = exprLabel + ' (클릭해서 이미지 교체)';
+
+      var labelEl = document.createElement('span');
+      labelEl.className = 'expr-label';
+      labelEl.textContent = exprLabel;
+      chip.appendChild(labelEl);
+
+      var removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'expr-remove';
+      removeBtn.textContent = '×';
+      removeBtn.title = exprLabel + ' 삭제';
+      removeBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        removeExpressionImage(name, exprLabel);
+        renderExpressionStrip(strip, name, avatarBtn);
+        syncAvatarPreview(name, avatarBtn);
+      });
+      chip.appendChild(removeBtn);
+
+      var chipInput = document.createElement('input');
+      chipInput.type = 'file';
+      chipInput.accept = 'image/*';
+      chipInput.hidden = true;
+      chip.addEventListener('click', function(){ chipInput.click(); });
+      chipInput.addEventListener('change', function(e){
+        var file = e.target.files[0];
+        if(!file) return;
+        readImageFile(file, function(dataUrl){
+          setExpressionImage(name, exprLabel, dataUrl);
+          renderExpressionStrip(strip, name, avatarBtn);
+          syncAvatarPreview(name, avatarBtn);
+        });
+      });
+
+      strip.appendChild(chip);
+      strip.appendChild(chipInput);
+    });
+
+    var addTile = document.createElement('button');
+    addTile.type = 'button';
+    addTile.className = 'expr-add';
+    addTile.textContent = '+';
+    addTile.title = '표정 추가 (여러 장 한 번에 선택 가능)';
+
+    var addInput = document.createElement('input');
+    addInput.type = 'file';
+    addInput.accept = 'image/*';
+    addInput.multiple = true;
+    addInput.hidden = true;
+
+    addTile.addEventListener('click', function(){ addInput.click(); });
+    addInput.addEventListener('change', function(e){
+      addExpressionFiles(name, e.target.files, strip, avatarBtn);
+      addInput.value = '';
+    });
+
+    strip.addEventListener('dragover', function(e){ e.preventDefault(); strip.classList.add('dragover'); });
+    strip.addEventListener('dragleave', function(){ strip.classList.remove('dragover'); });
+    strip.addEventListener('drop', function(e){
+      e.preventDefault();
+      strip.classList.remove('dragover');
+      addExpressionFiles(name, e.dataTransfer.files, strip, avatarBtn);
+    });
+
+    strip.appendChild(addTile);
+    strip.appendChild(addInput);
+  }
+
+  dropzone.addEventListener('click', function(){ fileInput.click(); });
+  dropzone.addEventListener('dragover', function(e){ e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', function(){ dropzone.classList.remove('dragover'); });
+  dropzone.addEventListener('drop', function(e){
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    var file = e.dataTransfer.files[0];
+    if(file) readFile(file);
+  });
+  fileInput.addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(file) readFile(file);
+  });
+  function readFile(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      pasteArea.value = e.target.result;
+      tryParse(e.target.result);
+    };
+    reader.onerror = function(){
+      showError('파일을 읽지 못했어요. 다시 시도해주세요.');
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  parseBtn.addEventListener('click', function(){ tryParse(pasteArea.value); });
+
+  sampleBtn.addEventListener('click', function(){
+    var sample = document.getElementById('sampleLog').textContent;
+    pasteArea.value = sample;
+    tryParse(sample);
+  });
+
+  playBtn.addEventListener('click', function(){
+    if(!currentBeats) return;
+    switchView('playerView');
+    startPlayback(currentBeats, currentColors);
+  });
+
+  var bgmLinkLabel = document.getElementById('bgmLinkLabel');
+  var bgmLinkUrl = document.getElementById('bgmLinkUrl');
+  document.getElementById('bgmLinkAddBtn').addEventListener('click', function(){
+    var url = bgmLinkUrl.value.trim();
+    if(!url){ showError('BGM 링크를 입력해주세요.'); return; }
+    var ytId = extractYoutubeId(url);
+    if(!ytId && looksLikeYoutubeUrl(url)){
+      showError('유튜브 링크에서 영상 ID를 읽지 못했어요. 주소를 다시 확인하거나, 주소창의 짧은 링크(youtu.be/...) 형태로 시도해주세요.');
+      return;
+    }
+    hideError();
+    var label = bgmLinkLabel.value.trim() || labelFromFilename(url.split('/').pop());
+    label = uniqueLibLabel(bgmLibrary.order, label);
+    if(ytId){
+      setBgmItem(label, {type:'youtube', videoId:ytId});
+    }else{
+      setBgmItem(label, {type:'url', src:url});
+    }
+    renderBgmStrip();
+    bgmLinkLabel.value = '';
+    bgmLinkUrl.value = '';
+  });
+
+  /* ---------------- advanced review mode ---------------- */
+  var TYPE_META = {
+    dialogue:  {label:'대사', badge:'대사'},
+    narration: {label:'GM 서술', badge:'GM 서술'},
+    ending:    {label:'엔딩 문구', badge:'엔딩'},
+    judgement: {label:'판정/주사위', badge:'판정'},
+    system:    {label:'시스템 메시지', badge:'시스템'},
+    divider:   {label:'장면 전환', badge:'전환'},
+    cue:       {label:'GM 서술(큐)', badge:'큐'},
+    skip:      {label:'제외됨', badge:'제외'}
+  };
+  function typeLabel(t){ return (TYPE_META[t] && TYPE_META[t].label) || t; }
+  function typeBadge(t){ return (TYPE_META[t] && TYPE_META[t].badge) || t; }
+
+  var reviewList = document.getElementById('reviewList');
+  var reviewModeBtn = document.getElementById('reviewModeBtn');
+  var reviewBackBtn = document.getElementById('reviewBackBtn');
+  var reviewResetBtn = document.getElementById('reviewResetBtn');
+  var reviewPlayBtn = document.getElementById('reviewPlayBtn');
+  var reviewSearch = document.getElementById('reviewSearch');
+  var reviewFilter = document.getElementById('reviewFilter');
+
+  reviewModeBtn.addEventListener('click', function(){
+    if(!currentRawEntries) return;
+    openReviewMode();
+    switchView('reviewView');
+  });
+  reviewBackBtn.addEventListener('click', function(){ switchView('setupView'); });
+  reviewPlayBtn.addEventListener('click', function(){
+    if(!currentBeats) return;
+    switchView('playerView');
+    startPlayback(currentBeats, currentColors);
+  });
+  reviewResetBtn.addEventListener('click', function(){
+    lineOverrides = {};
+    lineExpressionOverrides = {};
+    lineBgOverrides = {};
+    lineBgmOverrides = {};
+    openReviewMode();
+    rebuildAndRenderPreview(currentSpeakers);
+  });
+  reviewSearch.addEventListener('input', applyReviewFilter);
+  reviewFilter.addEventListener('change', applyReviewFilter);
+
+  function openReviewMode(){
+    reviewList.innerHTML = '';
+    currentRawEntries.forEach(function(entry, i){
+      var autoType = classify(entry.speaker, entry.text, currentGMSet).type;
+      var override = lineOverrides[i];
+      var effective = override || autoType;
+
+      var card = document.createElement('div');
+      card.className = 'review-card' + (effective==='skip' ? ' rc-skip' : '');
+      card.dataset.effective = effective;
+      card.dataset.speaker = entry.speaker;
+      card.dataset.text = entry.text;
+
+      var idxEl = document.createElement('div');
+      idxEl.className = 'rc-index';
+      idxEl.textContent = '#' + (i+1);
+
+      var body = document.createElement('div');
+      body.className = 'rc-body';
+      var speakerRow = document.createElement('div');
+      speakerRow.className = 'rc-speaker';
+      var speakerName = document.createElement('span');
+      speakerName.textContent = entry.speaker;
+      var badge = document.createElement('span');
+      badge.className = 'rc-badge';
+      badge.textContent = typeBadge(effective);
+      speakerRow.appendChild(speakerName);
+      speakerRow.appendChild(badge);
+      var textEl = document.createElement('div');
+      textEl.className = 'rc-text';
+      textEl.textContent = entry.text;
+      body.appendChild(speakerRow);
+      body.appendChild(textEl);
+
+      var select = document.createElement('select');
+      select.className = 'rc-select';
+      var options = [
+        {v:'', t:'자동 (' + typeLabel(autoType) + ')'},
+        {v:'dialogue', t:'대사로 처리'},
+        {v:'narration', t:'GM 서술로 처리'},
+        {v:'ending', t:'엔딩 문구로 처리'},
+        {v:'skip', t:'이 줄 제외하기'}
+      ];
+      options.forEach(function(o){
+        var opt = document.createElement('option');
+        opt.value = o.v;
+        opt.textContent = o.t;
+        if((override||'') === o.v) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      var selectWrap = document.createElement('div');
+      selectWrap.className = 'rc-selects';
+      selectWrap.appendChild(select);
+
+      var exprSelect = null;
+      function refreshExprSelect(effectiveType){
+        var ce = charExpressions[entry.speaker];
+        var shouldShow = (effectiveType === 'dialogue' || effectiveType === 'judgement') && ce && ce.order.length > 1;
+        if(shouldShow){
+          if(!exprSelect){
+            exprSelect = document.createElement('select');
+            exprSelect.className = 'rc-select rc-expr-select';
+            ce.order.forEach(function(exprLabel){
+              var opt = document.createElement('option');
+              opt.value = exprLabel;
+              opt.textContent = '표정: ' + exprLabel;
+              if((lineExpressionOverrides[i] || ce.order[0]) === exprLabel) opt.selected = true;
+              exprSelect.appendChild(opt);
+            });
+            exprSelect.addEventListener('change', function(){
+              lineExpressionOverrides[i] = exprSelect.value;
+              rebuildAndRenderPreview(currentSpeakers);
+            });
+            selectWrap.appendChild(exprSelect);
+          }
+          exprSelect.hidden = false;
+        }else if(exprSelect){
+          exprSelect.hidden = true;
+        }
+      }
+      refreshExprSelect(effective);
+
+      if(bgLibrary.order.length){
+        var bgSelect = document.createElement('select');
+        bgSelect.className = 'rc-select rc-bg-select';
+        var noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = '배경: 변경 없음';
+        bgSelect.appendChild(noneOpt);
+        bgLibrary.order.forEach(function(bgLabel){
+          var opt = document.createElement('option');
+          opt.value = bgLabel;
+          opt.textContent = '배경 → ' + bgLabel;
+          if(lineBgOverrides[i] === bgLabel) opt.selected = true;
+          bgSelect.appendChild(opt);
+        });
+        bgSelect.addEventListener('change', function(){
+          if(bgSelect.value){ lineBgOverrides[i] = bgSelect.value; }
+          else{ delete lineBgOverrides[i]; }
+          rebuildAndRenderPreview(currentSpeakers);
+        });
+        selectWrap.appendChild(bgSelect);
+      }
+
+      if(bgmLibrary.order.length){
+        var bgmSelect = document.createElement('select');
+        bgmSelect.className = 'rc-select rc-bgm-select';
+        var noneOpt2 = document.createElement('option');
+        noneOpt2.value = '';
+        noneOpt2.textContent = 'BGM: 변경 없음';
+        bgmSelect.appendChild(noneOpt2);
+        bgmLibrary.order.forEach(function(bgmLabel){
+          var opt = document.createElement('option');
+          opt.value = bgmLabel;
+          opt.textContent = 'BGM → ' + bgmLabel;
+          if(lineBgmOverrides[i] === bgmLabel) opt.selected = true;
+          bgmSelect.appendChild(opt);
+        });
+        bgmSelect.addEventListener('change', function(){
+          if(bgmSelect.value){ lineBgmOverrides[i] = bgmSelect.value; }
+          else{ delete lineBgmOverrides[i]; }
+          rebuildAndRenderPreview(currentSpeakers);
+        });
+        selectWrap.appendChild(bgmSelect);
+      }
+
+      select.addEventListener('change', function(){
+        if(select.value){ lineOverrides[i] = select.value; }
+        else{ delete lineOverrides[i]; }
+        var newEffective = select.value || autoType;
+        card.dataset.effective = newEffective;
+        card.classList.toggle('rc-skip', newEffective === 'skip');
+        badge.textContent = typeBadge(newEffective);
+        refreshExprSelect(newEffective);
+        rebuildAndRenderPreview(currentSpeakers);
+        applyReviewFilter();
+      });
+
+      card.appendChild(idxEl);
+      card.appendChild(body);
+      card.appendChild(selectWrap);
+      reviewList.appendChild(card);
+    });
+    applyReviewFilter();
+  }
+
+  function applyReviewFilter(){
+    var q = reviewSearch.value.trim().toLowerCase();
+    var f = reviewFilter.value;
+    var cards = reviewList.querySelectorAll('.review-card');
+    cards.forEach(function(card){
+      var matchesType = (f==='all') || (card.dataset.effective === f);
+      var matchesQuery = !q || (card.dataset.speaker.toLowerCase().indexOf(q)!==-1) || (card.dataset.text.toLowerCase().indexOf(q)!==-1);
+      card.classList.toggle('rc-hidden', !(matchesType && matchesQuery));
+    });
+  }
+
+  /* ---------------- view switching ---------------- */
+  function switchView(id){
+    document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+  }
+  document.getElementById('exitBtn').addEventListener('click', function(){
+    stopAuto();
+    switchView('setupView');
+  });
+
+  /* ---------------- player ---------------- */
+  var beatsArr = [], charColors = {};
+  var idx = -1;
+  var isTyping = false;
+  var typingTimer = null;
+  var pendingOnDone = null;
+  var autoMode = false;
+  var autoTimer = null;
+  var backlog = [];
+  var lastSpeaker = null;
+
+  var dialogueBox = document.getElementById('dialogueBox');
+  var nameTag = document.getElementById('nameTag');
+  var dialogueText = document.getElementById('dialogueText');
+  var stampEl = document.getElementById('stamp');
+  var narrationLayer = document.getElementById('narrationLayer');
+  var cueBanner = document.getElementById('cueBanner');
+  var systemToast = document.getElementById('systemToast');
+  var dividerVeil = document.getElementById('dividerVeil');
+  var endingCard = document.getElementById('endingCard');
+  var endingText = document.getElementById('endingText');
+  var portraitWrap = document.getElementById('portraitWrap');
+  var portraitEl = document.getElementById('portrait');
+  var advanceHint = document.getElementById('advanceHint');
+  var progressFill = document.getElementById('progressFill');
+  var clickCatcher = document.getElementById('clickCatcher');
+  var backlogPanel = document.getElementById('backlogPanel');
+  var backlogContent = document.getElementById('backlogContent');
+  var autoBtn = document.getElementById('autoBtn');
+  var backlogBtn = document.getElementById('backlogBtn');
+  var bgLayers = [document.getElementById('bgLayer0'), document.getElementById('bgLayer1')];
+  var bgActiveLayer = 0;
+  var lastAppliedBg = undefined;
+  var bgmAudio = document.getElementById('bgmAudio');
+  var bgmYtWrap = document.getElementById('bgmYtWrap');
+  var bgmYoutube = document.getElementById('bgmYoutube');
+  var muteBtn = document.getElementById('muteBtn');
+  var bgmMuted = false;
+  var lastAppliedBgm = undefined;
+  var resolvedBgAt = [];
+  var resolvedBgmAt = [];
+
+  function resolveSceneTrack(beats, field){
+    var resolved = [];
+    var current = null;
+    for(var k=0;k<beats.length;k++){
+      if(beats[k][field]) current = beats[k][field];
+      resolved.push(current);
+    }
+    return resolved;
+  }
+
+  function applyBackground(label){
+    if(label === lastAppliedBg) return;
+    lastAppliedBg = label;
+    var url = label && bgLibrary.images[label];
+    var back = bgLayers[1 - bgActiveLayer];
+    var front = bgLayers[bgActiveLayer];
+    back.style.backgroundImage = url ? 'url(' + url + ')' : 'none';
+    back.style.opacity = '1';
+    front.style.opacity = '0';
+    bgActiveLayer = 1 - bgActiveLayer;
+  }
+
+  function applyBgm(label){
+    if(label === lastAppliedBgm) return;
+    lastAppliedBgm = label;
+    var item = label && bgmLibrary.items[label];
+    try{ bgmAudio.pause(); }catch(e){}
+    bgmYoutube.src = 'about:blank';
+    bgmYtWrap.classList.remove('show');
+    if(!item) return;
+    if(item.type === 'youtube'){
+      bgmYoutube.src = 'https://www.youtube.com/embed/' + item.videoId +
+        '?autoplay=1&loop=1&playlist=' + item.videoId + '&controls=0' + (bgmMuted ? '&mute=1' : '');
+      bgmYtWrap.classList.add('show');
+    }else{
+      bgmAudio.src = item.src;
+      bgmAudio.muted = bgmMuted;
+      var p = bgmAudio.play();
+      if(p && p.catch) p.catch(function(){ /* autoplay blocked; user can unmute/retry via mute button */ });
+    }
+  }
+
+  muteBtn.addEventListener('click', function(){
+    bgmMuted = !bgmMuted;
+    muteBtn.textContent = bgmMuted ? '🔇' : '🔊';
+    muteBtn.classList.toggle('muted', bgmMuted);
+    bgmAudio.muted = bgmMuted;
+    if(bgmYtWrap.classList.contains('show')){
+      // youtube mute toggling needs the iframe reloaded with/without the mute param
+      var current = lastAppliedBgm;
+      lastAppliedBgm = undefined;
+      applyBgm(current);
+    }
+  });
+
+  function startPlayback(beats, colors){
+    beatsArr = beats;
+    charColors = colors;
+    idx = -1;
+    backlog = [];
+    lastSpeaker = null;
+    backlogContent.innerHTML = '';
+    resolvedBgAt = resolveSceneTrack(beats, 'bgChange');
+    resolvedBgmAt = resolveSceneTrack(beats, 'bgmChange');
+    lastAppliedBg = undefined;
+    lastAppliedBgm = undefined;
+    bgLayers[0].style.opacity = '0';
+    bgLayers[1].style.opacity = '0';
+    hideAllLayers();
+    stopAuto();
+    next();
+  }
+
+  function hideAllLayers(){
+    dialogueBox.classList.remove('show');
+    narrationLayer.classList.remove('show');
+    cueBanner.classList.remove('show');
+    systemToast.classList.remove('show');
+    dividerVeil.classList.remove('show');
+    endingCard.classList.remove('show');
+    stampEl.classList.remove('show');
+    portraitWrap.classList.remove('show');
+    advanceHint.style.opacity = '1';
+    var strayBtn = endingCard.querySelector('.again-btn');
+    if(strayBtn) strayBtn.remove();
+  }
+
+  function next(){
+    if(isTyping){ finishTyping(); return; }
+    idx++;
+    if(idx >= beatsArr.length){ showEndScreen(); return; }
+    renderBeat(beatsArr[idx]);
+    updateProgress();
+  }
+  clickCatcher.addEventListener('click', next);
+
+  function prev(){
+    if(idx <= 0) return;
+    stopAuto();
+    clearInterval(typingTimer);
+    isTyping = false;
+    idx = Math.min(idx, beatsArr.length) - 1;
+    renderBeat(beatsArr[idx], {instant:true, record:false});
+    updateProgress();
+  }
+
+  var lastWheelAt = 0;
+  document.getElementById('stage').addEventListener('wheel', function(e){
+    if(!document.getElementById('playerView').classList.contains('active')) return;
+    if(Math.abs(e.deltaY) < 8) return;
+    var now = Date.now();
+    if(now - lastWheelAt < 320) return;
+    lastWheelAt = now;
+    if(e.deltaY < 0){ prev(); } else { next(); }
+  }, {passive:true});
+
+  document.addEventListener('keydown', function(e){
+    if(!document.getElementById('playerView').classList.contains('active')) return;
+    if(e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight'){
+      e.preventDefault();
+      next();
+    }else if(e.code === 'ArrowLeft'){
+      e.preventDefault();
+      prev();
+    }
+  });
+
+  function updateProgress(){
+    var pct = beatsArr.length ? ((idx+1)/beatsArr.length)*100 : 0;
+    progressFill.style.width = pct + '%';
+  }
+
+  function setPortrait(speaker, expression){
+    if(!speaker || !charColors[speaker]){
+      portraitWrap.classList.remove('show');
+      return;
+    }
+    var ce = charExpressions[speaker];
+    var img = null;
+    if(ce){
+      if(expression && ce.images[expression]) img = ce.images[expression];
+      else if(ce.order.length) img = ce.images[ce.order[0]];
+    }
+    if(img){
+      portraitEl.style.backgroundImage = 'url(' + img + ')';
+      portraitEl.style.backgroundColor = 'transparent';
+      portraitEl.textContent = '';
+      portraitEl.classList.add('has-image');
+    }else{
+      portraitEl.style.backgroundImage = 'none';
+      portraitEl.style.backgroundColor = charColors[speaker];
+      portraitEl.textContent = speaker.trim().charAt(0);
+      portraitEl.classList.remove('has-image');
+    }
+    portraitWrap.classList.add('show');
+  }
+
+  var typingEl = null;
+  var typingText = '';
+
+  function typeText(el, text, onDone){
+    clearInterval(typingTimer);
+    typingEl = el;
+    typingText = text;
+    el.textContent = '';
+    isTyping = true;
+    advanceHint.style.opacity = '0';
+    pendingOnDone = onDone;
+    var i = 0;
+    var speed = text.length > 40 ? 18 : 26;
+    typingTimer = setInterval(function(){
+      el.textContent += text.charAt(i);
+      i++;
+      if(i >= text.length){
+        clearInterval(typingTimer);
+        finishTyping();
+      }
+    }, speed);
+  }
+  function finishTyping(){
+    if(!isTyping) return;
+    clearInterval(typingTimer);
+    if(typingEl) typingEl.textContent = typingText;
+    isTyping = false;
+    advanceHint.style.opacity = '1';
+    var cb = pendingOnDone;
+    pendingOnDone = null;
+    if(cb) cb();
+    if(autoMode) scheduleAuto();
+  }
+
+  function pushBacklog(entry){ backlog.push(entry); renderBacklogEntry(entry); }
+  function renderBacklogEntry(entry){
+    var item = document.createElement('div');
+    item.className = 'backlog-item ' + entry.type;
+    if(entry.name){
+      var n = document.createElement('span');
+      n.className = 'bl-name';
+      n.textContent = entry.name;
+      item.appendChild(n);
+    }
+    var t = document.createElement('span');
+    t.textContent = entry.text;
+    item.appendChild(t);
+    backlogContent.appendChild(item);
+    backlogContent.scrollTop = backlogContent.scrollHeight;
+  }
+
+  function renderBeat(beat, opts){
+    opts = opts || {};
+    var record = opts.record !== false;
+    var instant = !!opts.instant;
+    if(resolvedBgAt.length) applyBackground(resolvedBgAt[idx]);
+    if(resolvedBgmAt.length) applyBgm(resolvedBgmAt[idx]);
+    hideAllLayers();
+
+    if(beat.type === 'narration'){
+      setPortrait(null);
+      narrationLayer.style.color = customColors[beat.speaker] || '';
+      narrationLayer.classList.add('show');
+      if(instant){ narrationLayer.textContent = beat.text; }
+      else{ typeText(narrationLayer, beat.text); }
+      if(record) pushBacklog({type:'narration', text:beat.text});
+      return;
+    }
+
+    if(beat.type === 'cue'){
+      setPortrait(null);
+      cueBanner.textContent = beat.text.replace(/^【|】$/g,'');
+      cueBanner.classList.add('show');
+      advanceHint.style.opacity='1';
+      if(record) pushBacklog({type:'narration', text:beat.text});
+      return;
+    }
+
+    if(beat.type === 'divider'){
+      dividerVeil.classList.add('show');
+      advanceHint.style.opacity='1';
+      return;
+    }
+
+    if(beat.type === 'system'){
+      var label = beat.character ? (beat.character + '의 ' + beat.stat + '  ' + beat.from + ' → ' + beat.to) : beat.text;
+      systemToast.textContent = label;
+      systemToast.classList.add('show');
+      advanceHint.style.opacity='1';
+      return;
+    }
+
+    if(beat.type === 'judgement'){
+      dialogueBox.classList.add('show');
+      var color = charColors[beat.speaker] || 'var(--gold)';
+      nameTag.style.display = 'inline-block';
+      nameTag.style.background = color;
+      nameTag.textContent = beat.speaker;
+      setPortrait(beat.speaker, beat.expression);
+      var fail = beat.resultKnown && isFailResult(beat.result);
+      var stampColor = !beat.resultKnown ? 'var(--gold)' : (fail ? 'var(--fail)' : 'var(--success)');
+      var skillLine = '🎲 「' + beat.skill + '」 판정 중...';
+      if(instant){
+        dialogueText.textContent = skillLine;
+        stampEl.textContent = beat.result;
+        stampEl.style.color = stampColor;
+        stampEl.classList.add('show');
+      }else{
+        typeText(dialogueText, skillLine, function(){
+          stampEl.textContent = beat.result;
+          stampEl.style.color = stampColor;
+          stampEl.classList.add('show');
+        });
+      }
+      if(record) pushBacklog({type:'judgement', name:beat.speaker, text:beat.skill + ' — ' + beat.result});
+      return;
+    }
+
+    if(beat.type === 'ending'){
+      endingText.textContent = beat.text;
+      endingCard.classList.add('show');
+      advanceHint.style.opacity='1';
+      if(record) pushBacklog({type:'narration', text:beat.text});
+      return;
+    }
+
+    // dialogue
+    dialogueBox.classList.add('show');
+    var c = charColors[beat.speaker] || '#c98a7d';
+    nameTag.style.display = 'inline-block';
+    nameTag.style.background = c;
+    nameTag.textContent = beat.speaker;
+    setPortrait(beat.speaker, beat.expression);
+    if(instant){ dialogueText.textContent = beat.text; }
+    else{ typeText(dialogueText, beat.text); }
+    if(record) pushBacklog({type:'dialogue', name:beat.speaker, text:beat.text});
+  }
+
+  function showEndScreen(){
+    hideAllLayers();
+    endingText.textContent = '끝까지 재생했어요';
+    endingCard.classList.add('show');
+    var existing = endingCard.querySelector('.again-btn');
+    if(existing) existing.remove();
+    var again = document.createElement('button');
+    again.className = 'btn btn-primary again-btn';
+    again.style.marginTop = '22px';
+    again.textContent = '처음부터 다시 보기';
+    again.addEventListener('click', function(){
+      again.remove();
+      startPlayback(currentBeats, currentColors);
+    });
+    endingCard.appendChild(again);
+    progressFill.style.width = '100%';
+  }
+
+  /* auto play */
+  function scheduleAuto(){
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(function(){ if(autoMode) next(); }, 1100);
+  }
+  function stopAuto(){ autoMode = false; clearTimeout(autoTimer); autoBtn.classList.remove('on'); autoBtn.textContent='▶'; }
+  autoBtn.addEventListener('click', function(){
+    autoMode = !autoMode;
+    autoBtn.classList.toggle('on', autoMode);
+    autoBtn.textContent = autoMode ? '⏸' : '▶';
+    if(autoMode && !isTyping) scheduleAuto();
+  });
+
+  /* backlog */
+  backlogBtn.addEventListener('click', function(){ backlogPanel.classList.toggle('open'); });
+  document.getElementById('closeBacklog').addEventListener('click', function(){ backlogPanel.classList.remove('open'); });
+
+  /* ---------------- export a standalone playable file ---------------- */
+  var exportBtn = document.getElementById('exportBtn');
+  if(exportBtn){
+    exportBtn.addEventListener('click', function(){
+      if(!currentBeats || !currentBeats.length){
+        showError('먼저 로그를 변환해주세요.');
+        return;
+      }
+      var filename = window.prompt('내보낼 파일 이름을 입력하세요 (확장자 제외)', 'visual-novel');
+      if(!filename) return;
+      filename = filename.trim().replace(/[\\/:*?"<>|]/g, '') || 'visual-novel';
+
+      var exportData = {
+        beats: currentBeats,
+        charColors: currentColors,
+        charExpressions: charExpressions,
+        bgLibrary: bgLibrary,
+        bgmLibrary: bgmLibrary
+      };
+      var payload = JSON.stringify(exportData).replace(/</g, '\\u003c');
+
+      // The textarea's live value serializes into outerHTML too — clear it first so the
+      // exported player doesn't carry a redundant copy of the entire raw pasted log.
+      var savedPasteValue = pasteArea.value;
+      pasteArea.value = '';
+      var fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      pasteArea.value = savedPasteValue;
+
+      // strip the large embedded sample log — the exported player doesn't need it
+      fullHtml = fullHtml.replace(/<script type="text\/plain" id="sampleLog">[\s\S]*?<\/script>/, '');
+
+      // Insert right before the real closing </body> tag. We can't just take the
+      // first match — this very handler's own source contains the literal text
+      // "</body>" (see the fallback string below), and that occurrence comes
+      // earlier in the document than the actual closing tag. Splice at the LAST
+      // occurrence instead, which is always the real one.
+      var CLOSE_BODY = '</' + 'body>';
+      var closeIdx = fullHtml.lastIndexOf(CLOSE_BODY);
+      var injected = '<script id="exportData" type="application/json">' + payload + '<\/script>\n' + CLOSE_BODY;
+      if(closeIdx === -1){
+        fullHtml += injected;
+      }else{
+        fullHtml = fullHtml.slice(0, closeIdx) + injected + fullHtml.slice(closeIdx + CLOSE_BODY.length);
+      }
+
+      var blob = new Blob([fullHtml], {type:'text/html'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    });
+  }
+
+  // If this very file was itself produced by the export above, it carries a
+  // baked-in <script id="exportData"> blob placed AFTER this script in the
+  // document — so it doesn't exist yet while this script is running (HTML
+  // parsing is paused for our own execution). Wait for the document to finish
+  // parsing before checking for it.
+  function bootFromExportData(){
+    var dataEl = document.getElementById('exportData');
+    if(!dataEl) return;
+    var data;
+    try{ data = JSON.parse(dataEl.textContent); }catch(e){ return; }
+    currentBeats = data.beats || [];
+    currentColors = data.charColors || {};
+    charExpressions = data.charExpressions || {};
+    bgLibrary = data.bgLibrary || {order:[], images:{}};
+    bgmLibrary = data.bgmLibrary || {order:[], items:{}};
+    switchView('playerView');
+    startPlayback(currentBeats, currentColors);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', bootFromExportData);
+  }else{
+    bootFromExportData();
+  }
+
+})();
+</script>
+</body>
+</html>
