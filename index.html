@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>LOG/REEL — 코코포리아 로그를 비주얼 노벨로</title>
+<title>LOG/REEL — 코코포리아·타코야키 박스 로그를 비주얼 노벨로</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -26,7 +26,7 @@
     --font-mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:var(--void);color:var(--ink);font-family:var(--font-ui);}
+  html,body{margin:0;padding:0;background:var(--void);color:var(--ink);font-family:var(--font-ui);word-break:keep-all;overflow-wrap:break-word;}
   body{min-height:100vh;overflow-x:hidden;}
   button{font-family:inherit;cursor:pointer;}
   textarea{font-family:var(--font-mono);}
@@ -176,6 +176,11 @@
   .lib-title{font-size:13px;font-weight:700;color:var(--ink);margin-right:8px;}
   .lib-sub{font-size:11.5px;color:var(--ink-faint);}
   .bgm-link-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .bgm-import-picker{
+    display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;
+    background:var(--panel);border:1px solid var(--edge);border-radius:8px;padding:10px;
+  }
+  .bgm-import-picker select{flex:1;min-width:180px;}
   .bgm-link-input{
     background:var(--panel);border:1px solid var(--edge);border-radius:7px;
     color:var(--ink);font-size:12.5px;padding:8px 10px;outline:none;
@@ -269,7 +274,7 @@
     padding:2px 6px;border-radius:3px;background:var(--panel-2);color:var(--ink-faint);
     text-transform:uppercase;
   }
-  .review-card .rc-text{font-size:13.5px;line-height:1.6;color:var(--ink);word-break:break-word;}
+  .review-card .rc-text{font-size:13.5px;line-height:1.6;color:var(--ink);word-break:keep-all;overflow-wrap:break-word;}
   .review-card.rc-skip .rc-text{color:var(--ink-faint);text-decoration:line-through;}
   .review-card .rc-selects{display:flex;flex-direction:column;gap:6px;}
   .review-card select.rc-select{
@@ -336,6 +341,11 @@
   .stage-btn-log{right:64px;}
   .stage-btn-auto{right:20px;}
   .stage-btn-auto.on{color:var(--gold);border-color:var(--gold);}
+  .stage-btn-speed{
+    right:152px;font-size:11px;font-weight:700;font-family:var(--font-mono);
+    opacity:0;pointer-events:none;transition:opacity .2s ease;
+  }
+  .stage-btn-speed.show{opacity:1;pointer-events:auto;}
 
   .bgm-yt-frame{
     position:absolute;left:20px;top:64px;z-index:19;
@@ -486,6 +496,7 @@
     .stage-btn-mute{right:96px;}
     .stage-btn-log{right:54px;}
     .stage-btn-auto{right:12px;}
+    .stage-btn-speed{right:136px;font-size:10px;}
     .portrait-wrap{bottom:160px;}
     .bgm-yt-frame{width:120px;height:68px;top:52px;left:12px;}
   }
@@ -499,9 +510,9 @@
   <section id="setupView" class="view active">
     <div class="setup-frame">
       <header class="setup-header">
-        <span class="eyebrow">CCFOLIA LOG → VISUAL NOVEL</span>
+        <span class="eyebrow">CCFOLIA / TAKOYAKI BOX LOG → VISUAL NOVEL</span>
         <h1>로그를 대사로,<br/>대사를 장면으로.</h1>
-        <p class="lede">코코포리아에서 내보낸 로그 HTML을 넣으면 GM 서술과 캐릭터 대사, 판정 결과를 그대로 살려 클릭으로 넘겨보는 비주얼 노벨로 바꿔드려요.</p>
+        <p class="lede">코코포리아 또는 타코야키 박스에서 내보낸 로그 HTML을 넣으면 GM 서술과 캐릭터 대사, 판정 결과를 그대로 살려 클릭으로 넘겨보는 비주얼 노벨로 바꿔드려요.</p>
       </header>
 
       <div class="dropzone" id="dropzone">
@@ -509,7 +520,7 @@
         <div class="dropzone-inner">
           <div class="dropzone-icon">🎞️</div>
           <p class="dropzone-title">로그 파일을 끌어다 놓거나 클릭해서 선택</p>
-          <p class="dropzone-sub">코코포리아 "로그 내보내기"로 저장한 .html 파일</p>
+          <p class="dropzone-sub">코코포리아 "로그 내보내기" 또는 타코야키 박스에서 내보낸 .html 파일</p>
         </div>
       </div>
 
@@ -530,12 +541,12 @@
           <div class="stat"><span class="stat-num" id="statChar">0</span><span class="stat-label">등장인물</span></div>
         </div>
         <div class="cast-rows" id="castList"></div>
-        <p class="cast-hint">GM 이름이 다르다면 체크를 옮겨주세요 · 표정 이미지는 여러 장을 한 번에 선택하거나 끌어다 놓을 수 있어요</p>
+        <p class="cast-hint">GM 이름이 다르다면 체크를 옮겨주세요 · 표정 이미지는 여러 장을 한 번에 선택하거나 끌어다 놓을 수 있어요 · 권장 크기 800×1200px 세로형(2:3), 배경 투명 PNG 추천</p>
 
         <div class="lib-section">
           <div class="lib-header">
             <span class="lib-title">🖼️ 배경</span>
-            <span class="lib-sub">장면 전환에 쓸 배경 이미지 (여러 장 한 번에 추가 가능)</span>
+            <span class="lib-sub">장면 전환에 쓸 배경 이미지 (여러 장 한 번에 추가 가능) · 권장 크기 1920×1080px 가로형(16:9)</span>
           </div>
           <div class="expr-strip" id="bgStrip"></div>
         </div>
@@ -550,6 +561,15 @@
             <input type="text" id="bgmLinkLabel" class="bgm-link-input bgm-link-label" placeholder="이름 (예: 전투)">
             <input type="text" id="bgmLinkUrl" class="bgm-link-input bgm-link-url" placeholder="mp3/ogg 링크 또는 유튜브 링크 붙여넣기">
             <button id="bgmLinkAddBtn" class="btn btn-ghost">링크로 추가</button>
+          </div>
+          <div class="bgm-link-row">
+            <button id="bgmImportBtn" type="button" class="btn btn-ghost">📂 TRPG Watch 시나리오에서 BGM 가져오기</button>
+            <input type="file" id="bgmImportInput" accept=".json,application/json" hidden>
+          </div>
+          <div class="bgm-import-picker" id="bgmImportPicker" hidden>
+            <select id="bgmImportSelect" class="bgm-link-input"></select>
+            <button id="bgmImportConfirm" class="btn btn-primary">가져오기</button>
+            <button id="bgmImportCancel" class="btn btn-ghost">취소</button>
           </div>
         </div>
 
@@ -609,6 +629,7 @@
       <button class="stage-btn stage-btn-back" id="exitBtn" title="설정으로 돌아가기">✕</button>
       <button class="stage-btn stage-btn-mute" id="muteBtn" title="BGM 음소거">🔊</button>
       <button class="stage-btn stage-btn-log" id="backlogBtn" title="지난 대사 보기">☰</button>
+      <button class="stage-btn stage-btn-speed" id="speedBtn" title="자동 재생 속도">1x</button>
       <button class="stage-btn stage-btn-auto" id="autoBtn" title="자동 재생">▶</button>
 
       <div class="scene" id="scene">
@@ -753,10 +774,133 @@
     return entries;
   }
 
+  // ccfolia logs use <p><span>[room]</span><span>name</span>: <span>text</span></p>.
+  // TRPG 타코야키 박스 exports use a completely different structure (<div class="msg">,
+  // <div class="msg-script">, <div class="dcard-tkt"> ticket cards for rolls) — detect
+  // which one we're looking at from a couple of telltale class names before parsing.
+  function detectLogFormat(htmlString){
+    if(/class="[^"]*\bmsg-script\b[^"]*"/.test(htmlString) || /class="[^"]*\bdcard-tkt\b[^"]*"/.test(htmlString)){
+      return 'takoyaki';
+    }
+    return 'ccfolia';
+  }
+
+  // Walks an element's child nodes and joins their text, turning <br> into a space
+  // so line-broken sentences don't get glued together (textContent alone drops <br>).
+  function extractTextWithBreaks(el){
+    var parts = [];
+    (function walk(node){
+      if(node.nodeType === 3){ parts.push(node.nodeValue); }
+      else if(node.nodeType === 1){
+        if(node.tagName === 'BR'){ parts.push(' '); }
+        else{ Array.prototype.forEach.call(node.childNodes, walk); }
+      }
+    })(el);
+    return parts.join('').replace(/\s+/g,' ').trim();
+  }
+
+  // Takoyaki Box ticket cards (.dcard-tkt) carry clean structured roll data —
+  // skill name, a Korean result label, and data-level for success/fail — so we
+  // don't need to regex-guess anything the way we do for ccfolia's inline "＞" text.
+  function parseTakoyakiTicket(tktEl){
+    var nameEl = tktEl.querySelector('.tkt-name');
+    var skill = nameEl ? nameEl.textContent.trim() : '판정';
+    var metaBs = tktEl.querySelectorAll('.tkt-meta > b');
+    var result = metaBs.length > 1 ? metaBs[1].textContent.trim() : '';
+    if(!result){
+      var level = tktEl.getAttribute('data-level') || '';
+      result = level === 'fail' ? '실패' : level === 'fumble' ? '펌블' : '결과';
+    }
+    return {skill:skill, result:result};
+  }
+
+  // Dedupes a character's embedded portrait images (Takoyaki Box embeds one per
+  // message, un-deduplicated) into labeled "표정1/표정2/..." entries compatible
+  // with charExpressions, and returns which label a given data URL maps to.
+  function takoyakiPortraitLabel(store, speaker, dataUrl){
+    if(!dataUrl) return undefined;
+    if(!store[speaker]) store[speaker] = {order:[], images:{}, _byUrl:{}};
+    var s = store[speaker];
+    if(s._byUrl[dataUrl]) return s._byUrl[dataUrl];
+    var label = '표정' + (s.order.length + 1);
+    s.order.push(label);
+    s.images[label] = dataUrl;
+    s._byUrl[dataUrl] = label;
+    return label;
+  }
+
+  // Parses a Takoyaki Box export into entries pre-tagged with their true type
+  // (dialogue/narration/judgement/cue) and, for dialogue, which portrait image
+  // was shown — so the whole thing can play back correctly with zero manual
+  // Advanced-mode work. Returns {entries, portraits} where entries carry
+  // {speaker, text, forcedType, expression?, judgementSkill?, judgementResult?}.
+  function parseTakoyakiLog(htmlString){
+    var doc = new DOMParser().parseFromString(htmlString, 'text/html');
+    var logRoot = doc.querySelector('.log') || doc.body;
+    var children = logRoot ? Array.prototype.slice.call(logRoot.children) : [];
+    var entries = [];
+    var portraits = {};
+
+    children.forEach(function(el){
+      var cls = el.className || '';
+
+      if(/\bmsg-script\b/.test(cls)){
+        var mkBox = el.querySelector('.mk-box');
+        if(mkBox){
+          var ruby = mkBox.querySelector('ruby');
+          var label = ruby && ruby.firstElementChild
+            ? ruby.firstElementChild.textContent.trim()
+            : extractTextWithBreaks(mkBox);
+          if(label) entries.push({speaker:'GM', text:label, forcedType:'cue'});
+          return;
+        }
+        var text = extractTextWithBreaks(el);
+        if(text) entries.push({speaker:'GM', text:text, forcedType:'narration'});
+        return;
+      }
+
+      if(/(^|\s)msg(\s|$)/.test(cls)){
+        var whoNameEl = el.querySelector('.who > span');
+        var speaker = whoNameEl ? whoNameEl.textContent.trim() : '알 수 없음';
+
+        var picEl = el.querySelector('.pic');
+        var dataUrl = null;
+        if(picEl){
+          var bg = (picEl.style && picEl.style.backgroundImage) || picEl.getAttribute('style') || '';
+          var m = bg.match(/url\((?:"|')?(data:[^"')]+)(?:"|')?\)/);
+          if(m) dataUrl = m[1];
+        }
+
+        var tktEl = el.querySelector('.dcard-tkt');
+        if(tktEl){
+          var parsed = parseTakoyakiTicket(tktEl);
+          entries.push({
+            speaker:speaker, text: parsed.skill + ' ' + parsed.result,
+            forcedType:'judgement', judgementSkill:parsed.skill, judgementResult:parsed.result
+          });
+          return;
+        }
+
+        var txtEl = el.querySelector('.txt') || el.querySelector('.body');
+        var text = txtEl ? extractTextWithBreaks(txtEl) : '';
+        if(!text) return;
+        var expr = dataUrl ? takoyakiPortraitLabel(portraits, speaker, dataUrl) : undefined;
+        var entry = {speaker:speaker, text:text, forcedType:'dialogue'};
+        if(expr) entry.expression = expr;
+        entries.push(entry);
+      }
+    });
+
+    // strip our internal dedup bookkeeping before this is used as charExpressions
+    Object.keys(portraits).forEach(function(name){ delete portraits[name]._byUrl; });
+
+    return {entries:entries, portraits:portraits};
+  }
+
   // Phase 2: classify raw entries using the current GM selection,
   // letting per-line manual overrides (from Advanced mode) win over auto-detection,
   // and attaching a chosen expression to dialogue/judgement beats when set.
-  function buildBeats(rawEntries, gmSet, overrides, exprOverrides, bgOverrides, bgmOverrides){
+  function buildBeats(rawEntries, gmSet, overrides, exprOverrides, bgOverrides, bgmOverrides, judgementOverrides){
     var out = [];
     rawEntries.forEach(function(e, i){
       var forced = overrides ? overrides[i] : undefined;
@@ -766,6 +910,15 @@
       else if(forced === 'narration'){ beat = {type:'narration', speaker:e.speaker, text:e.text}; }
       else if(forced === 'cue'){ beat = {type:'cue', speaker:e.speaker, text:e.text}; }
       else if(forced === 'ending'){ beat = {type:'ending', speaker:e.speaker, text:e.text}; }
+      else if(forced === 'judgement'){
+        var jd = judgementOverrides && judgementOverrides[i];
+        beat = {
+          type:'judgement', speaker:e.speaker, text:e.text,
+          skill: (jd && jd.skill) || '판정',
+          result: (jd && jd.result) || '결과',
+          resultKnown: !!(jd && jd.resultKnown)
+        };
+      }
       else{ beat = classify(e.speaker, e.text, gmSet); }
       if((beat.type === 'dialogue' || beat.type === 'judgement') && exprOverrides && exprOverrides[i]){
         beat.expression = exprOverrides[i];
@@ -833,6 +986,7 @@
   var lineExpressionOverrides = {};
   var lineBgOverrides = {};
   var lineBgmOverrides = {};
+  var lineJudgementOverrides = {}; // {index: {skill, result, resultKnown}} — used when lineOverrides[index]==='judgement'
   var customColors = {}; // { name: '#rrggbb' } — user-picked overrides for the auto palette
   var charExpressions = {}; // { name: { order:['기본','웃음',...], images:{label: dataURL} } }
 
@@ -1138,22 +1292,43 @@
       showError('내용이 비어 있어요. 파일을 올리거나 로그 HTML을 붙여넣어주세요.');
       return;
     }
-    var raw;
+
+    var format = detectLogFormat(htmlString);
+    var raw = [];
+    var presetOverrides = {};
+    var presetExpressions = {};
+    var presetJudgements = {};
+    var presetPortraits = null;
+
     try{
-      raw = parseRawEntries(htmlString);
+      if(format === 'takoyaki'){
+        var parsed = parseTakoyakiLog(htmlString);
+        parsed.entries.forEach(function(entry, i){
+          raw.push({speaker:entry.speaker, text:entry.text});
+          presetOverrides[i] = entry.forcedType;
+          if(entry.expression) presetExpressions[i] = entry.expression;
+          if(entry.forcedType === 'judgement'){
+            presetJudgements[i] = {skill:entry.judgementSkill, result:entry.judgementResult, resultKnown:true};
+          }
+        });
+        presetPortraits = parsed.portraits;
+      }else{
+        raw = parseRawEntries(htmlString);
+      }
     }catch(e){
-      showError('로그를 읽는 중 문제가 생겼어요. 코코포리아 "로그 내보내기"로 저장한 HTML 파일이 맞는지 확인해주세요.');
+      showError('로그를 읽는 중 문제가 생겼어요. 지원하는 로그 형식(코코포리아 / 타코야키 박스)이 맞는지 확인해주세요.');
       return;
     }
     if(!raw.length){
-      showError('인식된 대사가 없어요. 코코포리아 로그 내보내기 형식(HTML)이 맞는지 확인해주세요.');
+      showError('인식된 대사가 없어요. 코코포리아 또는 타코야키 박스에서 내보낸 로그 HTML 형식이 맞는지 확인해주세요.');
       return;
     }
     hideError();
     currentRawEntries = raw;
-    charExpressions = {};
-    lineOverrides = {};
-    lineExpressionOverrides = {};
+    charExpressions = presetPortraits || {};
+    lineOverrides = presetOverrides;
+    lineExpressionOverrides = presetExpressions;
+    lineJudgementOverrides = presetJudgements;
     lineBgOverrides = {};
     lineBgmOverrides = {};
     customColors = {};
@@ -1163,12 +1338,12 @@
     renderBgmStrip();
     var speakers = uniqueSpeakers(raw);
     currentSpeakers = speakers;
-    currentGMSet = new Set(guessGM(speakers));
+    currentGMSet = format === 'takoyaki' ? new Set(['GM']) : new Set(guessGM(speakers));
     rebuildAndRenderPreview(speakers);
   }
 
   function rebuildAndRenderPreview(speakers){
-    var beats = buildBeats(currentRawEntries, currentGMSet, lineOverrides, lineExpressionOverrides, lineBgOverrides, lineBgmOverrides);
+    var beats = buildBeats(currentRawEntries, currentGMSet, lineOverrides, lineExpressionOverrides, lineBgOverrides, lineBgmOverrides, lineJudgementOverrides);
     currentBeats = beats;
     currentColors = buildCharColors(beats, currentGMSet);
     renderPreview(beats, currentColors, speakers);
@@ -1424,6 +1599,78 @@
     bgmLinkUrl.value = '';
   });
 
+  /* ---------------- import BGM from a TRPG Watch scenario export ---------------- */
+  var bgmImportBtn = document.getElementById('bgmImportBtn');
+  var bgmImportInput = document.getElementById('bgmImportInput');
+  var bgmImportPicker = document.getElementById('bgmImportPicker');
+  var bgmImportSelect = document.getElementById('bgmImportSelect');
+  var pendingImportScenarios = null;
+
+  function importScenarioBgm(scenario){
+    var list = (scenario && scenario.bgm) || [];
+    if(!list.length){
+      showError('"' + scenario.name + '" 시나리오에 등록된 BGM이 없어요.');
+      return;
+    }
+    hideError();
+    var seenIds = {};
+    var added = 0;
+    list.forEach(function(track){
+      if(!track || !track.id || seenIds[track.id]) return;
+      seenIds[track.id] = true;
+      var label = uniqueLibLabel(bgmLibrary.order, track.title || track.id);
+      setBgmItem(label, {type:'youtube', videoId:track.id});
+      added++;
+    });
+    renderBgmStrip();
+  }
+
+  bgmImportBtn.addEventListener('click', function(){ bgmImportInput.click(); });
+  bgmImportInput.addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var data;
+      try{ data = JSON.parse(ev.target.result); }catch(err){
+        showError('JSON 파일을 읽지 못했어요. TRPG Watch에서 내보낸 시나리오 파일이 맞는지 확인해주세요.');
+        return;
+      }
+      if(!data || !Array.isArray(data.scenarios) || !data.scenarios.length){
+        showError('시나리오 정보를 찾을 수 없어요. TRPG Watch에서 내보낸 파일 형식이 맞는지 확인해주세요.');
+        return;
+      }
+      if(data.scenarios.length === 1){
+        importScenarioBgm(data.scenarios[0]);
+      }else{
+        pendingImportScenarios = data.scenarios;
+        bgmImportSelect.innerHTML = '';
+        data.scenarios.forEach(function(sc, idx){
+          var opt = document.createElement('option');
+          opt.value = String(idx);
+          var count = (sc.bgm || []).length;
+          opt.textContent = sc.name + ' (' + count + '곡)';
+          bgmImportSelect.appendChild(opt);
+        });
+        bgmImportPicker.hidden = false;
+      }
+    };
+    reader.onerror = function(){ showError('파일을 읽지 못했어요. 다시 시도해주세요.'); };
+    reader.readAsText(file, 'utf-8');
+    bgmImportInput.value = '';
+  });
+  document.getElementById('bgmImportConfirm').addEventListener('click', function(){
+    if(!pendingImportScenarios) return;
+    var idx = parseInt(bgmImportSelect.value, 10);
+    importScenarioBgm(pendingImportScenarios[idx]);
+    bgmImportPicker.hidden = true;
+    pendingImportScenarios = null;
+  });
+  document.getElementById('bgmImportCancel').addEventListener('click', function(){
+    bgmImportPicker.hidden = true;
+    pendingImportScenarios = null;
+  });
+
   /* ---------------- advanced review mode ---------------- */
   var TYPE_META = {
     dialogue:  {label:'대사', badge:'대사'},
@@ -1509,6 +1756,7 @@
         {v:'dialogue', t:'대사로 처리'},
         {v:'narration', t:'GM 서술로 처리'},
         {v:'cue', t:'(큐) 배너로 처리'},
+        {v:'judgement', t:'판정으로 처리'},
         {v:'ending', t:'엔딩 문구로 처리'},
         {v:'skip', t:'이 줄 제외하기'}
       ];
@@ -1632,10 +1880,15 @@
     document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
     document.getElementById(id).classList.add('active');
   }
+  var isStandaloneExport = false;
   document.getElementById('exitBtn').addEventListener('click', function(){
     stopAuto();
     stopBgm();
-    switchView('setupView');
+    if(isStandaloneExport){
+      window.history.back();
+    }else{
+      switchView('setupView');
+    }
   });
 
   /* ---------------- player ---------------- */
@@ -2002,15 +2255,35 @@
   }
 
   /* auto play */
+  var AUTO_SPEEDS = [
+    {label:'0.5x', delay:2400},
+    {label:'1x',   delay:1100},
+    {label:'1.5x', delay:650},
+    {label:'2x',   delay:350}
+  ];
+  var autoSpeedIndex = 1; // default 1x
+  var speedBtn = document.getElementById('speedBtn');
+  speedBtn.textContent = AUTO_SPEEDS[autoSpeedIndex].label;
+  speedBtn.addEventListener('click', function(){
+    autoSpeedIndex = (autoSpeedIndex + 1) % AUTO_SPEEDS.length;
+    speedBtn.textContent = AUTO_SPEEDS[autoSpeedIndex].label;
+    if(autoMode && !isTyping) scheduleAuto();
+  });
+
   function scheduleAuto(){
     clearTimeout(autoTimer);
-    autoTimer = setTimeout(function(){ if(autoMode) next(); }, 1100);
+    autoTimer = setTimeout(function(){ if(autoMode) next(); }, AUTO_SPEEDS[autoSpeedIndex].delay);
   }
-  function stopAuto(){ autoMode = false; clearTimeout(autoTimer); autoBtn.classList.remove('on'); autoBtn.textContent='▶'; }
+  function stopAuto(){
+    autoMode = false; clearTimeout(autoTimer);
+    autoBtn.classList.remove('on'); autoBtn.textContent='▶';
+    speedBtn.classList.remove('show');
+  }
   autoBtn.addEventListener('click', function(){
     autoMode = !autoMode;
     autoBtn.classList.toggle('on', autoMode);
     autoBtn.textContent = autoMode ? '⏸' : '▶';
+    speedBtn.classList.toggle('show', autoMode);
     if(autoMode && !isTyping) scheduleAuto();
   });
 
@@ -2082,6 +2355,7 @@
     if(!dataEl) return;
     var data;
     try{ data = JSON.parse(dataEl.textContent); }catch(e){ return; }
+    isStandaloneExport = true;
     currentBeats = data.beats || [];
     currentColors = data.charColors || {};
     charExpressions = data.charExpressions || {};
