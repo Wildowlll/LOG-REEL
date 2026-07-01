@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>LOG/REEL — 코코포리아·타코야키 박스 로그를 비주얼 노벨로</title>
+<title>LOG/REEL — 코코포리아·타코야키 박스·롤20 로그를 비주얼 노벨로</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -341,11 +341,35 @@
   .stage-btn-log{right:64px;}
   .stage-btn-auto{right:20px;}
   .stage-btn-auto.on{color:var(--gold);border-color:var(--gold);}
-  .stage-btn-speed{
-    right:152px;font-size:11px;font-weight:700;font-family:var(--font-mono);
+
+  .type-speed-group{
+    position:absolute;top:22px;left:64px;z-index:20;height:34px;
+    display:flex;align-items:center;gap:2px;padding:0 5px;
+    background:rgba(16,15,24,.55);border:1px solid rgba(237,232,226,.15);border-radius:17px;
+    backdrop-filter:blur(4px);
+  }
+  .type-speed-opt{
+    background:transparent;border:none;color:var(--ink-faint);
+    font-family:var(--font-mono);font-size:10.5px;font-weight:700;line-height:1;
+    padding:6px 7px;border-radius:12px;cursor:pointer;transition:color .15s ease, background .15s ease;
+  }
+  .type-speed-opt:hover{color:var(--ink);}
+  .type-speed-opt.active{color:#12111a;background:var(--gold);}
+
+  .speed-control{
+    position:absolute;top:22px;right:152px;z-index:20;height:34px;
+    display:flex;align-items:center;gap:7px;padding:0 12px 0 10px;
+    background:rgba(16,15,24,.55);border:1px solid rgba(237,232,226,.15);border-radius:17px;
+    backdrop-filter:blur(4px);
     opacity:0;pointer-events:none;transition:opacity .2s ease;
   }
-  .stage-btn-speed.show{opacity:1;pointer-events:auto;}
+  .speed-control.show{opacity:1;pointer-events:auto;}
+  .speed-control .speed-label{
+    font-size:10.5px;font-family:var(--font-mono);font-weight:700;color:var(--gold);min-width:28px;text-align:center;
+  }
+  .speed-control input[type="range"]{
+    width:68px;accent-color:var(--gold);cursor:pointer;
+  }
 
   .bgm-yt-frame{
     position:absolute;left:20px;top:64px;z-index:19;
@@ -408,7 +432,7 @@
     flex-direction:column;text-align:center;background:rgba(10,9,15,.72);
     opacity:0;pointer-events:none;transition:opacity .5s ease;padding:0 24px;
   }
-  .ending-card.show{opacity:1;pointer-events:auto;}
+  .ending-card.show{opacity:1;}
   .ending-card .eyebrow{color:var(--gold);font:600 11px/1 var(--font-mono);letter-spacing:.24em;margin-bottom:16px;}
   .ending-card h2{font-family:var(--font-display);font-size:clamp(22px,4vw,32px);font-weight:700;color:var(--ink);max-width:22ch;line-height:1.4;margin:0;}
 
@@ -496,7 +520,10 @@
     .stage-btn-mute{right:96px;}
     .stage-btn-log{right:54px;}
     .stage-btn-auto{right:12px;}
-    .stage-btn-speed{right:136px;font-size:10px;}
+    .type-speed-group{left:54px;padding:0 3px;}
+    .type-speed-opt{font-size:9px;padding:5px 5px;}
+    .speed-control{right:136px;padding:0 8px 0 8px;}
+    .speed-control input[type="range"]{width:48px;}
     .portrait-wrap{bottom:160px;}
     .bgm-yt-frame{width:120px;height:68px;top:52px;left:12px;}
   }
@@ -510,9 +537,9 @@
   <section id="setupView" class="view active">
     <div class="setup-frame">
       <header class="setup-header">
-        <span class="eyebrow">CCFOLIA / TAKOYAKI BOX LOG → VISUAL NOVEL</span>
+        <span class="eyebrow">TRPG LOG → VISUAL NOVEL</span>
         <h1>로그를 대사로,<br/>대사를 장면으로.</h1>
-        <p class="lede">코코포리아 또는 타코야키 박스에서 내보낸 로그 HTML을 넣으면 GM 서술과 캐릭터 대사, 판정 결과를 그대로 살려 클릭으로 넘겨보는 비주얼 노벨로 바꿔드려요.</p>
+        <p class="lede">코코포리아·타코야키 박스·롤20에서 내보낸 로그 HTML을 넣으면 GM 서술과 캐릭터 대사, 판정 결과를 그대로 살려 클릭으로 넘겨보는 비주얼 노벨로 바꿔드려요.</p>
       </header>
 
       <div class="dropzone" id="dropzone">
@@ -520,7 +547,7 @@
         <div class="dropzone-inner">
           <div class="dropzone-icon">🎞️</div>
           <p class="dropzone-title">로그 파일을 끌어다 놓거나 클릭해서 선택</p>
-          <p class="dropzone-sub">코코포리아 "로그 내보내기" 또는 타코야키 박스에서 내보낸 .html 파일</p>
+          <p class="dropzone-sub">코코포리아 "로그 내보내기" · 타코야키 박스 · 롤20에서 내보낸 .html 파일</p>
         </div>
       </div>
 
@@ -627,9 +654,18 @@
       <div class="film-holes film-holes-bottom"></div>
 
       <button class="stage-btn stage-btn-back" id="exitBtn" title="설정으로 돌아가기">✕</button>
+      <div class="type-speed-group" id="typeSpeedGroup">
+        <button class="type-speed-opt" data-idx="0" title="느리게">&gt;</button>
+        <button class="type-speed-opt" data-idx="1" title="보통">&gt;&gt;</button>
+        <button class="type-speed-opt" data-idx="2" title="빠르게">&gt;&gt;&gt;</button>
+        <button class="type-speed-opt" data-idx="3" title="즉시 표시">|&gt;</button>
+      </div>
       <button class="stage-btn stage-btn-mute" id="muteBtn" title="BGM 음소거">🔊</button>
       <button class="stage-btn stage-btn-log" id="backlogBtn" title="지난 대사 보기">☰</button>
-      <button class="stage-btn stage-btn-speed" id="speedBtn" title="자동 재생 속도">1x</button>
+      <div class="speed-control" id="speedControl">
+        <span class="speed-label" id="speedLabel">1x</span>
+        <input type="range" id="speedSlider" min="0" max="4" step="1" value="2" title="자동 재생 속도">
+      </div>
       <button class="stage-btn stage-btn-auto" id="autoBtn" title="자동 재생">▶</button>
 
       <div class="scene" id="scene">
@@ -782,6 +818,9 @@
     if(/class="[^"]*\bmsg-script\b[^"]*"/.test(htmlString) || /class="[^"]*\bdcard-tkt\b[^"]*"/.test(htmlString)){
       return 'takoyaki';
     }
+    if(/class="message (general|desc|emote)/.test(htmlString) || /sheet-rolltemplate/.test(htmlString)){
+      return 'roll20';
+    }
     return 'ccfolia';
   }
 
@@ -814,18 +853,18 @@
     return {skill:skill, result:result};
   }
 
-  // Dedupes a character's embedded portrait images (Takoyaki Box embeds one per
-  // message, un-deduplicated) into labeled "표정1/표정2/..." entries compatible
-  // with charExpressions, and returns which label a given data URL maps to.
-  function takoyakiPortraitLabel(store, speaker, dataUrl){
-    if(!dataUrl) return undefined;
+  // Dedupes a character's portrait images (embedded per-message in Takoyaki Box,
+  // or repeated avatar URLs in Roll20) into labeled "표정1/표정2/..." entries
+  // compatible with charExpressions, and returns which label a given image maps to.
+  function dedupPortraitLabel(store, speaker, imgUrl){
+    if(!imgUrl) return undefined;
     if(!store[speaker]) store[speaker] = {order:[], images:{}, _byUrl:{}};
     var s = store[speaker];
-    if(s._byUrl[dataUrl]) return s._byUrl[dataUrl];
+    if(s._byUrl[imgUrl]) return s._byUrl[imgUrl];
     var label = '표정' + (s.order.length + 1);
     s.order.push(label);
-    s.images[label] = dataUrl;
-    s._byUrl[dataUrl] = label;
+    s.images[label] = imgUrl;
+    s._byUrl[imgUrl] = label;
     return label;
   }
 
@@ -884,7 +923,7 @@
         var txtEl = el.querySelector('.txt') || el.querySelector('.body');
         var text = txtEl ? extractTextWithBreaks(txtEl) : '';
         if(!text) return;
-        var expr = dataUrl ? takoyakiPortraitLabel(portraits, speaker, dataUrl) : undefined;
+        var expr = dataUrl ? dedupPortraitLabel(portraits, speaker, dataUrl) : undefined;
         var entry = {speaker:speaker, text:text, forcedType:'dialogue'};
         if(expr) entry.expression = expr;
         entries.push(entry);
@@ -893,6 +932,110 @@
 
     // strip our internal dedup bookkeeping before this is used as charExpressions
     Object.keys(portraits).forEach(function(name){ delete portraits[name]._byUrl; });
+
+    return {entries:entries, portraits:portraits};
+  }
+
+  // Roll20 chat exports use div.message with a modifier class (desc/general/emote/
+  // hidden-message/rollresult). Speaker name lives in a .by span — but Roll20 only
+  // prints .by on the FIRST message of a consecutive run from the same sender, so
+  // later messages in that run carry no name at all and must inherit the last one.
+  // Returns the same {entries, portraits} shape as parseTakoyakiLog.
+  function extractRoll20MessageText(el){
+    var clone = el.cloneNode(true);
+    var junk = clone.querySelectorAll('.spacer, .avatar, .by, [class*="sheet-rolltemplate"]');
+    junk.forEach(function(n){ n.parentNode && n.parentNode.removeChild(n); });
+    return extractTextWithBreaks(clone);
+  }
+  function parseRoll20Log(htmlString){
+    var doc = new DOMParser().parseFromString(htmlString, 'text/html');
+    var msgs = doc.querySelectorAll('.message');
+    var entries = [];
+    var portraits = {};
+    var lastSpeaker = null;
+
+    msgs.forEach(function(el){
+      var cls = el.className || '';
+      if(/\bhidden-message\b/.test(cls)) return; // GM-hidden rolls carry no useful info
+
+      if(/\bdesc\b/.test(cls)){
+        var descText = extractTextWithBreaks(el);
+        if(!descText) return;
+        if(/^(PC|KPC|NPC)\s/.test(descText)) return; // session role-announcement, not narrative
+        if(/^[.\s…]+$/.test(descText)){ entries.push({speaker:'GM', text:'', forcedType:'divider'}); return; }
+        entries.push({speaker:'GM', text:descText, forcedType:'narration'});
+        return;
+      }
+
+      if(/\bemote\b/.test(cls)){
+        var emoteText = extractTextWithBreaks(el);
+        if(!emoteText) return;
+        entries.push({speaker:'GM', text:emoteText, forcedType: isEndingLine(emoteText) ? 'ending' : 'cue'});
+        return;
+      }
+
+      // A bare "/roll" result — same .by/.avatar layout as .general messages,
+      // but Roll20 gives it its own "rollresult" class instead of "general".
+      if(/\brollresult\b/.test(cls)){
+        var rrByEl = el.querySelector('.by');
+        var rrSpeaker = rrByEl ? rrByEl.textContent.replace(/[:：]\s*$/, '').trim() : lastSpeaker;
+        if(rrByEl) lastSpeaker = rrSpeaker;
+        if(!rrSpeaker) return;
+        var rolledEl = el.querySelector('.rolled');
+        var rrResult = rolledEl ? rolledEl.textContent.trim() : '';
+        if(!rrResult) return;
+        entries.push({
+          speaker:rrSpeaker, text:'주사위 ' + rrResult,
+          forcedType:'judgement', judgementSkill:'주사위', judgementResult:rrResult
+        });
+        return;
+      }
+
+      if(/\bgeneral\b/.test(cls)){
+        var byEl = el.querySelector('.by');
+        var speaker = byEl ? byEl.textContent.replace(/[:：]\s*$/, '').trim() : lastSpeaker;
+        if(byEl) lastSpeaker = speaker;
+        if(!speaker) return; // continuation with nothing to inherit from — skip safely
+
+        // Roll20 avatars are external files.d20.io URLs — sites with a strict
+        // img-src CSP block them outright and there's no way around that from
+        // here, so we don't bother auto-registering them as portraits.
+
+        var tmpl = el.querySelector('[class*="sheet-rolltemplate-coc"]');
+        if(tmpl){
+          var captionEl = tmpl.querySelector('caption');
+          var skill = captionEl ? captionEl.textContent.trim() : '판정';
+          var result = '결과';
+          var rows = tmpl.querySelectorAll('tr');
+          for(var i=0;i<rows.length;i++){
+            var label = rows[i].querySelector('.sheet-template_label');
+            if(label && label.getAttribute('data-i18n') === 'result'){
+              var valEl = rows[i].querySelector('.sheet-template_value');
+              if(valEl) result = valEl.textContent.trim();
+              break;
+            }
+          }
+          entries.push({
+            speaker:speaker, text: skill + ' ' + result,
+            forcedType:'judgement', judgementSkill:skill, judgementResult:result
+          });
+          return;
+        }
+
+        var plainText = extractRoll20MessageText(el);
+        var rollMatch = plainText.match(/rolling\s+.+?=\s*(-?\d+)\s*$/i);
+        if(rollMatch && plainText.length < 60){
+          entries.push({
+            speaker:speaker, text:'주사위 ' + rollMatch[1],
+            forcedType:'judgement', judgementSkill:'주사위', judgementResult:rollMatch[1]
+          });
+          return;
+        }
+
+        if(!plainText) return;
+        entries.push({speaker:speaker, text:plainText, forcedType:'dialogue'});
+      }
+    });
 
     return {entries:entries, portraits:portraits};
   }
@@ -910,6 +1053,7 @@
       else if(forced === 'narration'){ beat = {type:'narration', speaker:e.speaker, text:e.text}; }
       else if(forced === 'cue'){ beat = {type:'cue', speaker:e.speaker, text:e.text}; }
       else if(forced === 'ending'){ beat = {type:'ending', speaker:e.speaker, text:e.text}; }
+      else if(forced === 'divider'){ beat = {type:'divider'}; }
       else if(forced === 'judgement'){
         var jd = judgementOverrides && judgementOverrides[i];
         beat = {
@@ -1299,13 +1443,22 @@
     var presetExpressions = {};
     var presetJudgements = {};
     var presetPortraits = null;
+    var structuredParsers = {takoyaki: parseTakoyakiLog, roll20: parseRoll20Log};
 
     try{
-      if(format === 'takoyaki'){
-        var parsed = parseTakoyakiLog(htmlString);
+      if(structuredParsers[format]){
+        var parsed = structuredParsers[format](htmlString);
         parsed.entries.forEach(function(entry, i){
           raw.push({speaker:entry.speaker, text:entry.text});
-          presetOverrides[i] = entry.forcedType;
+          // Only lock in the structurally-unambiguous types here. Dialogue vs.
+          // narration is left to classify()+currentGMSet (same as ccfolia) so
+          // that checking/unchecking a speaker's GM box in the cast list still
+          // actually changes how their lines render — locking it to 'dialogue'
+          // here would make that checkbox a no-op for these formats.
+          if(entry.forcedType === 'judgement' || entry.forcedType === 'cue' ||
+             entry.forcedType === 'ending' || entry.forcedType === 'divider'){
+            presetOverrides[i] = entry.forcedType;
+          }
           if(entry.expression) presetExpressions[i] = entry.expression;
           if(entry.forcedType === 'judgement'){
             presetJudgements[i] = {skill:entry.judgementSkill, result:entry.judgementResult, resultKnown:true};
@@ -1316,11 +1469,11 @@
         raw = parseRawEntries(htmlString);
       }
     }catch(e){
-      showError('로그를 읽는 중 문제가 생겼어요. 지원하는 로그 형식(코코포리아 / 타코야키 박스)이 맞는지 확인해주세요.');
+      showError('로그를 읽는 중 문제가 생겼어요. 지원하는 로그 형식(코코포리아 / 타코야키 박스 / 롤20)이 맞는지 확인해주세요.');
       return;
     }
     if(!raw.length){
-      showError('인식된 대사가 없어요. 코코포리아 또는 타코야키 박스에서 내보낸 로그 HTML 형식이 맞는지 확인해주세요.');
+      showError('인식된 대사가 없어요. 코코포리아·타코야키 박스·롤20 중 하나에서 내보낸 로그 HTML 형식이 맞는지 확인해주세요.');
       return;
     }
     hideError();
@@ -1338,7 +1491,7 @@
     renderBgmStrip();
     var speakers = uniqueSpeakers(raw);
     currentSpeakers = speakers;
-    currentGMSet = format === 'takoyaki' ? new Set(['GM']) : new Set(guessGM(speakers));
+    currentGMSet = structuredParsers[format] ? new Set(['GM']) : new Set(guessGM(speakers));
     rebuildAndRenderPreview(speakers);
   }
 
@@ -1663,8 +1816,8 @@
     if(!pendingImportScenarios) return;
     var idx = parseInt(bgmImportSelect.value, 10);
     importScenarioBgm(pendingImportScenarios[idx]);
-    bgmImportPicker.hidden = true;
-    pendingImportScenarios = null;
+    // Keep the picker open with the same loaded file's scenario list so the
+    // user can pick another scenario and import again without re-uploading.
   });
   document.getElementById('bgmImportCancel').addEventListener('click', function(){
     bgmImportPicker.hidden = true;
@@ -1757,6 +1910,7 @@
         {v:'narration', t:'GM 서술로 처리'},
         {v:'cue', t:'(큐) 배너로 처리'},
         {v:'judgement', t:'판정으로 처리'},
+        {v:'divider', t:'장면 전환(암전)으로 처리'},
         {v:'ending', t:'엔딩 문구로 처리'},
         {v:'skip', t:'이 줄 제외하기'}
       ];
@@ -2021,6 +2175,7 @@
     systemToast.classList.remove('show');
     dividerVeil.classList.remove('show');
     endingCard.classList.remove('show');
+    endingCard.style.pointerEvents = '';
     stampEl.classList.remove('show');
     portraitWrap.classList.remove('show');
     advanceHint.style.opacity = '1';
@@ -2101,16 +2256,34 @@
   var typingEl = null;
   var typingText = '';
 
+  var TYPE_SPEEDS = [
+    {label:'>',   delay:46},
+    {label:'>>',  delay:24},
+    {label:'>>>', delay:9},
+    {label:'|>',  delay:0, instant:true}
+  ];
+  var typeSpeedIndex = 1; // default '>>'
+
   function typeText(el, text, onDone){
     clearInterval(typingTimer);
     typingEl = el;
     typingText = text;
+    pendingOnDone = onDone;
+    var cfg = TYPE_SPEEDS[typeSpeedIndex];
+    if(cfg.instant){
+      el.textContent = text;
+      isTyping = false;
+      advanceHint.style.opacity = '1';
+      var cb0 = pendingOnDone;
+      pendingOnDone = null;
+      if(cb0) cb0();
+      if(autoMode) scheduleAuto();
+      return;
+    }
     el.textContent = '';
     isTyping = true;
     advanceHint.style.opacity = '0';
-    pendingOnDone = onDone;
     var i = 0;
-    var speed = text.length > 40 ? 18 : 26;
     typingTimer = setInterval(function(){
       el.textContent += text.charAt(i);
       i++;
@@ -2118,7 +2291,7 @@
         clearInterval(typingTimer);
         finishTyping();
       }
-    }, speed);
+    }, cfg.delay);
   }
   function finishTyping(){
     if(!isTyping) return;
@@ -2240,6 +2413,7 @@
     hideAllLayers();
     endingText.textContent = '끝까지 재생했어요';
     endingCard.classList.add('show');
+    endingCard.style.pointerEvents = 'auto';
     var existing = endingCard.querySelector('.again-btn');
     if(existing) existing.remove();
     var again = document.createElement('button');
@@ -2256,18 +2430,36 @@
 
   /* auto play */
   var AUTO_SPEEDS = [
-    {label:'0.5x', delay:2400},
-    {label:'1x',   delay:1100},
-    {label:'1.5x', delay:650},
-    {label:'2x',   delay:350}
+    {label:'0.5x', delay:4200},
+    {label:'0.75x',delay:2800},
+    {label:'1x',   delay:1900},
+    {label:'1.5x', delay:1100},
+    {label:'2x',   delay:600}
   ];
-  var autoSpeedIndex = 1; // default 1x
-  var speedBtn = document.getElementById('speedBtn');
-  speedBtn.textContent = AUTO_SPEEDS[autoSpeedIndex].label;
-  speedBtn.addEventListener('click', function(){
-    autoSpeedIndex = (autoSpeedIndex + 1) % AUTO_SPEEDS.length;
-    speedBtn.textContent = AUTO_SPEEDS[autoSpeedIndex].label;
+  var autoSpeedIndex = 2; // default 1x — the middle of the 5 steps
+  var speedControl = document.getElementById('speedControl');
+  var speedLabel = document.getElementById('speedLabel');
+  var speedSlider = document.getElementById('speedSlider');
+  speedSlider.value = String(autoSpeedIndex);
+  speedLabel.textContent = AUTO_SPEEDS[autoSpeedIndex].label;
+  speedSlider.addEventListener('input', function(){
+    autoSpeedIndex = parseInt(speedSlider.value, 10);
+    speedLabel.textContent = AUTO_SPEEDS[autoSpeedIndex].label;
     if(autoMode && !isTyping) scheduleAuto();
+  });
+
+  var typeSpeedOpts = document.querySelectorAll('.type-speed-opt');
+  function refreshTypeSpeedOpts(){
+    typeSpeedOpts.forEach(function(btn){
+      btn.classList.toggle('active', parseInt(btn.dataset.idx, 10) === typeSpeedIndex);
+    });
+  }
+  refreshTypeSpeedOpts();
+  typeSpeedOpts.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      typeSpeedIndex = parseInt(btn.dataset.idx, 10);
+      refreshTypeSpeedOpts();
+    });
   });
 
   function scheduleAuto(){
@@ -2277,13 +2469,13 @@
   function stopAuto(){
     autoMode = false; clearTimeout(autoTimer);
     autoBtn.classList.remove('on'); autoBtn.textContent='▶';
-    speedBtn.classList.remove('show');
+    speedControl.classList.remove('show');
   }
   autoBtn.addEventListener('click', function(){
     autoMode = !autoMode;
     autoBtn.classList.toggle('on', autoMode);
     autoBtn.textContent = autoMode ? '⏸' : '▶';
-    speedBtn.classList.toggle('show', autoMode);
+    speedControl.classList.toggle('show', autoMode);
     if(autoMode && !isTyping) scheduleAuto();
   });
 
