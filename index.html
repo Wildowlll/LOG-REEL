@@ -696,6 +696,28 @@
     return /(^|[^a-z])(the end|fin)([^a-z]|$)/i.test(text);
   }
 
+  // 줄 전체가 괄호 한 쌍으로 통째로 감싸져 있으면 "큐" 배너로 처리해요.
+  // GM마다 쓰는 괄호 스타일이 달라서 여러 종류를 함께 인식해요.
+  var CUE_BRACKETS = [['【','】'],['[',']'],['「','」'],['〔','〕'],['『','』']];
+  function isCueLine(text){
+    if(!text || text.length < 3) return false;
+    var first = text.charAt(0), last = text.charAt(text.length-1);
+    for(var i=0;i<CUE_BRACKETS.length;i++){
+      if(first === CUE_BRACKETS[i][0] && last === CUE_BRACKETS[i][1]) return true;
+    }
+    return false;
+  }
+  function stripCueBrackets(text){
+    if(!text) return text;
+    var first = text.charAt(0), last = text.charAt(text.length-1);
+    for(var i=0;i<CUE_BRACKETS.length;i++){
+      if(first === CUE_BRACKETS[i][0] && last === CUE_BRACKETS[i][1]){
+        return text.slice(1, -1);
+      }
+    }
+    return text;
+  }
+
   function classify(speaker, text, gmSet){
     if(speaker === 'system'){
       var m = text.match(/\[\s*(.+?)\s*\]\s*(.+?)\s*[:：]\s*(\d+)\s*→\s*(\d+)/);
@@ -708,7 +730,7 @@
       return {type:'judgement', speaker:speaker, text:text, skill:extractSkill(text), result:res.label, resultKnown:res.known};
     }
     if(gmSet && gmSet.has(speaker)){
-      if(/^【.+】$/.test(text)) return {type:'cue', speaker:speaker, text:text};
+      if(isCueLine(text)) return {type:'cue', speaker:speaker, text:text};
       if(isEndingLine(text)) return {type:'ending', speaker:speaker, text:text};
       return {type:'narration', speaker:speaker, text:text};
     }
@@ -742,6 +764,7 @@
       if(forced === 'skip') return;
       else if(forced === 'dialogue'){ beat = {type:'dialogue', speaker:e.speaker, text:e.text}; }
       else if(forced === 'narration'){ beat = {type:'narration', speaker:e.speaker, text:e.text}; }
+      else if(forced === 'cue'){ beat = {type:'cue', speaker:e.speaker, text:e.text}; }
       else if(forced === 'ending'){ beat = {type:'ending', speaker:e.speaker, text:e.text}; }
       else{ beat = classify(e.speaker, e.text, gmSet); }
       if((beat.type === 'dialogue' || beat.type === 'judgement') && exprOverrides && exprOverrides[i]){
@@ -772,11 +795,13 @@
     return guessed;
   }
 
-  function buildCharColors(beats){
+  function buildCharColors(beats, gmSet){
     var colors = {};
     var order = [];
     beats.forEach(function(b){
-      if((b.type==='dialogue' || b.type==='judgement') && b.speaker && order.indexOf(b.speaker)===-1){
+      var isPcBeat = (b.type==='dialogue' || b.type==='judgement') && b.speaker;
+      var speakerIsGM = gmSet && gmSet.has(b.speaker);
+      if(isPcBeat && !speakerIsGM && order.indexOf(b.speaker)===-1){
         order.push(b.speaker);
       }
     });
@@ -1145,7 +1170,7 @@
   function rebuildAndRenderPreview(speakers){
     var beats = buildBeats(currentRawEntries, currentGMSet, lineOverrides, lineExpressionOverrides, lineBgOverrides, lineBgmOverrides);
     currentBeats = beats;
-    currentColors = buildCharColors(beats);
+    currentColors = buildCharColors(beats, currentGMSet);
     renderPreview(beats, currentColors, speakers);
   }
 
@@ -1165,7 +1190,7 @@
       var avatarBtn = document.createElement('button');
       avatarBtn.type = 'button';
       avatarBtn.className = 'cast-avatar';
-      avatarBtn.style.backgroundColor = colors[name] || customColors[name] || 'var(--edge)';
+      avatarBtn.style.backgroundColor = isGM ? 'var(--edge)' : (colors[name] || customColors[name] || 'var(--edge)');
       avatarBtn.title = isGM ? 'GM은 이미지를 쓰지 않아요' : (name + '의 기본 이미지');
       avatarBtn.disabled = isGM;
       syncAvatarPreview(name, avatarBtn);
@@ -1209,7 +1234,7 @@
       colorInput.title = name + (isGM ? '의 서술 색상' : '의 대사창 색상');
       colorInput.addEventListener('input', function(){
         customColors[name] = colorInput.value;
-        avatarBtn.style.backgroundColor = colorInput.value;
+        if(!isGM) avatarBtn.style.backgroundColor = colorInput.value;
         rebuildAndRenderPreview(speakers);
       });
 
@@ -1483,6 +1508,7 @@
         {v:'', t:'자동 (' + typeLabel(autoType) + ')'},
         {v:'dialogue', t:'대사로 처리'},
         {v:'narration', t:'GM 서술로 처리'},
+        {v:'cue', t:'(큐) 배너로 처리'},
         {v:'ending', t:'엔딩 문구로 처리'},
         {v:'skip', t:'이 줄 제외하기'}
       ];
@@ -1890,7 +1916,7 @@
 
     if(beat.type === 'cue'){
       setPortrait(null);
-      cueBanner.textContent = beat.text.replace(/^【|】$/g,'');
+      cueBanner.textContent = stripCueBrackets(beat.text);
       cueBanner.classList.add('show');
       advanceHint.style.opacity='1';
       if(record) pushBacklog({type:'narration', text:beat.text});
