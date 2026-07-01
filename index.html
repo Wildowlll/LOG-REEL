@@ -4271,6 +4271,7 @@
   }
   document.getElementById('exitBtn').addEventListener('click', function(){
     stopAuto();
+    stopBgm();
     switchView('setupView');
   });
 
@@ -4356,6 +4357,14 @@
       var p = bgmAudio.play();
       if(p && p.catch) p.catch(function(){ /* autoplay blocked; user can unmute/retry via mute button */ });
     }
+  }
+
+  function stopBgm(){
+    try{ bgmAudio.pause(); }catch(e){}
+    bgmAudio.removeAttribute('src');
+    bgmYoutube.src = 'about:blank';
+    bgmYtWrap.classList.remove('show');
+    lastAppliedBgm = undefined;
   }
 
   muteBtn.addEventListener('click', function(){
