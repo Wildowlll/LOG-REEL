@@ -96,6 +96,17 @@
   .or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--edge);}
   .or-divider span{font-size:11px;color:var(--ink-faint);letter-spacing:.08em;}
 
+  .resume-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    background:linear-gradient(135deg, rgba(201,161,90,.1), rgba(177,69,63,.06));
+    border:1px solid rgba(201,161,90,.3);border-radius:10px;
+    padding:16px 18px;margin-bottom:22px;
+  }
+  .resume-banner-text{display:flex;flex-direction:column;gap:4px;}
+  .resume-banner-text strong{font-size:14px;color:var(--ink);}
+  .resume-banner-text span{font-size:12px;color:var(--ink-faint);}
+  .resume-banner-actions{display:flex;gap:8px;flex-shrink:0;}
+
   #pasteArea{
     width:100%;min-height:110px;resize:vertical;
     background:var(--panel);border:1px solid var(--edge);border-radius:8px;
@@ -176,6 +187,10 @@
   .lib-title{font-size:13px;font-weight:700;color:var(--ink);margin-right:8px;}
   .lib-sub{font-size:11.5px;color:var(--ink-faint);}
   .bgm-link-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .cover-fields{display:flex;gap:8px;flex-wrap:wrap;}
+  .cover-fields input{flex:1;min-width:140px;}
+  .cover-image-row{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+  .cover-image-status{font-size:12px;color:var(--ink-faint);}
   .bgm-import-picker{
     display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;
     background:var(--panel);border:1px solid var(--edge);border-radius:8px;padding:10px;
@@ -277,6 +292,14 @@
   .review-card .rc-text{font-size:13.5px;line-height:1.6;color:var(--ink);word-break:keep-all;overflow-wrap:break-word;}
   .review-card.rc-skip .rc-text{color:var(--ink-faint);text-decoration:line-through;}
   .review-card .rc-selects{display:flex;flex-direction:column;gap:6px;}
+  .rc-chapter-row{display:flex;align-items:center;gap:6px;margin-top:8px;}
+  .rc-chapter-icon{font-size:12px;opacity:.6;flex-shrink:0;}
+  .rc-chapter-input{
+    flex:1;min-width:0;background:var(--panel-2);border:1px solid var(--edge);border-radius:6px;
+    color:var(--ink);font-size:12px;padding:6px 9px;outline:none;
+  }
+  .rc-chapter-input:focus{border-color:var(--accent-soft);}
+  .rc-chapter-input:not(:placeholder-shown){border-color:rgba(201,161,90,.4);color:var(--gold);}
   .review-card select.rc-select{
     background:var(--panel-2);border:1px solid var(--edge);border-radius:6px;
     color:var(--ink-dim);font-size:12px;padding:7px 8px;outline:none;cursor:pointer;
@@ -336,8 +359,10 @@
   }
   .stage-btn:hover{color:var(--ink);border-color:rgba(237,232,226,.4);}
   .stage-btn-back{left:20px;}
-  .stage-btn-mute{right:108px;}
+  .stage-btn-mute{right:152px;}
   .stage-btn-mute.muted{color:var(--accent-soft);}
+  .stage-btn-chapters{right:108px;opacity:0;pointer-events:none;transition:opacity .2s ease;}
+  .stage-btn-chapters.show{opacity:1;pointer-events:auto;}
   .stage-btn-log{right:64px;}
   .stage-btn-auto{right:20px;}
   .stage-btn-auto.on{color:var(--gold);border-color:var(--gold);}
@@ -357,7 +382,7 @@
   .type-speed-opt.active{color:#12111a;background:var(--gold);}
 
   .speed-control{
-    position:absolute;top:22px;right:152px;z-index:20;height:34px;
+    position:absolute;top:22px;right:196px;z-index:20;height:34px;
     display:flex;align-items:center;gap:7px;padding:0 12px 0 10px;
     background:rgba(16,15,24,.55);border:1px solid rgba(237,232,226,.15);border-radius:17px;
     backdrop-filter:blur(4px);
@@ -430,11 +455,62 @@
   .ending-card{
     position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;
     flex-direction:column;text-align:center;background:rgba(10,9,15,.72);
-    opacity:0;pointer-events:none;transition:opacity .5s ease;padding:0 24px;
+    opacity:0;pointer-events:none;transition:opacity .5s ease;padding:24px;
+    overflow-y:auto;
   }
   .ending-card.show{opacity:1;}
   .ending-card .eyebrow{color:var(--gold);font:600 11px/1 var(--font-mono);letter-spacing:.24em;margin-bottom:16px;}
+
+  .judge-stats{margin-top:26px;width:min(420px,86vw);}
+  .judge-stats-row{display:flex;border:1px solid var(--edge);border-radius:10px;overflow:hidden;background:rgba(26,24,38,.5);}
+  .judge-stat{flex:1;text-align:center;padding:12px 6px;border-right:1px solid var(--edge);}
+  .judge-stat:last-child{border-right:none;}
+  .judge-stat-num{display:block;font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--gold);}
+  .judge-stat-label{display:block;font-size:10.5px;color:var(--ink-faint);margin-top:3px;}
+  .judge-stats-chars{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
+  .judge-char-chip{
+    font-size:11px;color:var(--ink-dim);background:rgba(26,24,38,.5);
+    border:1px solid var(--edge);border-radius:12px;padding:4px 10px;
+  }
   .ending-card h2{font-family:var(--font-display);font-size:clamp(22px,4vw,32px);font-weight:700;color:var(--ink);max-width:22ch;line-height:1.4;margin:0;}
+
+  .resume-play-card{
+    position:absolute;inset:0;z-index:17;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;text-align:center;background:rgba(10,9,15,.82);
+    opacity:0;pointer-events:none;transition:opacity .4s ease;padding:0 24px;
+  }
+  .resume-play-card.show{opacity:1;pointer-events:auto;}
+  .resume-play-card .eyebrow{color:var(--gold);font:600 11px/1 var(--font-mono);letter-spacing:.24em;margin-bottom:16px;}
+  .resume-play-card h2{font-family:var(--font-display);font-size:clamp(20px,3.6vw,28px);font-weight:700;color:var(--ink);margin:0 0 8px;}
+  .resume-play-card p{color:var(--ink-dim);font-size:13px;margin:0 0 24px;}
+  .resume-play-actions{display:flex;gap:10px;}
+
+  .cover-screen{
+    position:absolute;inset:0;z-index:18;overflow:hidden;
+    opacity:0;pointer-events:none;transition:opacity .5s ease;
+  }
+  .cover-screen.show{opacity:1;pointer-events:auto;}
+  .cover-screen-bg{
+    position:absolute;inset:0;background-size:cover;background-position:center;
+  }
+  .cover-screen-shade{
+    position:absolute;inset:0;
+    background:radial-gradient(120% 90% at 50% 30%, rgba(16,15,24,.35) 0%, rgba(10,9,15,.88) 75%);
+  }
+  .cover-screen-content{
+    position:relative;z-index:1;height:100%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:0 28px;
+  }
+  .cover-screen-content h1{
+    font-family:var(--font-display);font-weight:700;color:var(--ink);
+    font-size:clamp(28px,5.5vw,46px);line-height:1.3;margin:0 0 14px;
+    text-shadow:0 4px 24px rgba(0,0,0,.6);
+  }
+  .cover-screen-content p{
+    font-family:var(--font-display);font-style:italic;color:var(--ink-dim);
+    font-size:clamp(14px,2vw,17px);margin:0 0 34px;
+    text-shadow:0 2px 12px rgba(0,0,0,.5);
+  }
 
   .system-toast{
     position:absolute;top:64px;left:50%;transform:translate(-50%,-14px);
@@ -512,17 +588,27 @@
   .backlog-item.dialogue{color:var(--ink);}
   .backlog-item.judgement{color:var(--ink-faint);font-family:var(--font-mono);font-size:12px;}
 
+  .chapter-item{
+    width:100%;text-align:left;background:var(--panel);border:1px solid var(--edge);border-radius:8px;
+    padding:10px 12px;margin-bottom:8px;cursor:pointer;color:var(--ink);font-size:13px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .chapter-item:hover{border-color:var(--accent-soft);background:var(--panel-2);}
+  .chapter-item .chapter-item-pct{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);flex-shrink:0;}
+
   @media (max-width:560px){
     .setup-frame{max-width:100%;}
     .dialogue-box{width:94vw;padding:16px 18px 18px;}
     .stage-btn{width:30px;height:30px;font-size:12px;top:14px;}
     .stage-btn-back{left:12px;}
-    .stage-btn-mute{right:96px;}
+    .stage-btn-mute{right:136px;}
+    .stage-btn-chapters{right:96px;}
     .stage-btn-log{right:54px;}
     .stage-btn-auto{right:12px;}
     .type-speed-group{left:54px;padding:0 3px;}
     .type-speed-opt{font-size:9px;padding:5px 5px;}
-    .speed-control{right:136px;padding:0 8px 0 8px;}
+    .speed-control{right:176px;padding:0 8px 0 8px;}
     .speed-control input[type="range"]{width:48px;}
     .portrait-wrap{bottom:160px;}
     .bgm-yt-frame{width:120px;height:68px;top:52px;left:12px;}
@@ -541,6 +627,17 @@
         <h1>로그를 대사로,<br/>대사를 장면으로.</h1>
         <p class="lede">코코포리아·타코야키 박스·롤20에서 내보낸 로그 HTML을 넣으면 GM 서술과 캐릭터 대사, 판정 결과를 그대로 살려 클릭으로 넘겨보는 비주얼 노벨로 바꿔드려요.</p>
       </header>
+
+      <div class="resume-banner" id="resumeBanner" hidden>
+        <div class="resume-banner-text">
+          <strong>이전에 작업하던 내용이 있어요</strong>
+          <span id="resumeBannerMeta"></span>
+        </div>
+        <div class="resume-banner-actions">
+          <button id="resumeBtn" class="btn btn-primary">이어서 작업하기</button>
+          <button id="discardResumeBtn" class="btn btn-ghost">새로 시작</button>
+        </div>
+      </div>
 
       <div class="dropzone" id="dropzone">
         <input type="file" id="fileInput" accept=".html,.htm,.txt" hidden />
@@ -569,6 +666,23 @@
         </div>
         <div class="cast-rows" id="castList"></div>
         <p class="cast-hint">GM 이름이 다르다면 체크를 옮겨주세요 · 표정 이미지는 여러 장을 한 번에 선택하거나 끌어다 놓을 수 있어요 · 권장 크기 800×1200px 세로형(2:3), 배경 투명 PNG 추천</p>
+
+        <div class="lib-section">
+          <div class="lib-header">
+            <span class="lib-title">🎬 표지</span>
+            <span class="lib-sub">재생 맨 앞에 뜨는 타이틀 화면 · 제목을 비워두면 표지 없이 바로 시작해요</span>
+          </div>
+          <div class="cover-fields">
+            <input type="text" id="coverTitleInput" class="bgm-link-input" placeholder="제목">
+            <input type="text" id="coverSubtitleInput" class="bgm-link-input" placeholder="부제 (선택)">
+          </div>
+          <div class="cover-image-row">
+            <button type="button" class="btn btn-ghost" id="coverImageBtn">이미지 선택</button>
+            <input type="file" id="coverImageInput" accept="image/*" hidden>
+            <span class="cover-image-status" id="coverImageStatus">이미지 없음</span>
+            <button type="button" class="btn btn-ghost" id="coverImageClearBtn" hidden>제거</button>
+          </div>
+        </div>
 
         <div class="lib-section">
           <div class="lib-header">
@@ -661,6 +775,7 @@
         <button class="type-speed-opt" data-idx="3" title="즉시 표시">|&gt;</button>
       </div>
       <button class="stage-btn stage-btn-mute" id="muteBtn" title="BGM 음소거">🔊</button>
+      <button class="stage-btn stage-btn-chapters" id="chaptersBtn" title="장면 이동">📑</button>
       <button class="stage-btn stage-btn-log" id="backlogBtn" title="지난 대사 보기">☰</button>
       <div class="speed-control" id="speedControl">
         <span class="speed-label" id="speedLabel">1x</span>
@@ -677,6 +792,26 @@
         <div class="ending-card" id="endingCard">
           <span class="eyebrow">END</span>
           <h2 id="endingText"></h2>
+        </div>
+
+        <div class="cover-screen" id="coverScreen">
+          <div class="cover-screen-bg" id="coverScreenBg"></div>
+          <div class="cover-screen-shade"></div>
+          <div class="cover-screen-content">
+            <h1 id="coverScreenTitle"></h1>
+            <p id="coverScreenSubtitle" hidden></p>
+            <button id="coverStartBtn" class="btn btn-primary btn-large">시작하기</button>
+          </div>
+        </div>
+
+        <div class="resume-play-card" id="resumePlayCard">
+          <span class="eyebrow">CONTINUE?</span>
+          <h2>보던 곳이 있어요</h2>
+          <p id="resumePlayMeta"></p>
+          <div class="resume-play-actions">
+            <button id="resumePlayBtn" class="btn btn-primary">이어보기</button>
+            <button id="resumePlayRestartBtn" class="btn btn-ghost">처음부터</button>
+          </div>
         </div>
 
         <div class="dialogue-box" id="dialogueBox">
@@ -697,6 +832,11 @@
         <div class="backlog-content" id="backlogContent"></div>
       </div>
 
+      <div class="backlog-panel" id="chaptersPanel">
+        <div class="backlog-header"><span>장면 이동</span><button id="closeChapters">✕</button></div>
+        <div class="backlog-content" id="chaptersContent"></div>
+      </div>
+
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     </div>
   </section>
@@ -706,6 +846,87 @@
 <script>
 (function(){
   "use strict";
+
+  /* ---------------- autosave (IndexedDB) ---------------- */
+  var AUTOSAVE_DB = 'logreel-autosave';
+  var AUTOSAVE_STORE = 'session';
+  var AUTOSAVE_KEY = 'current';
+  var autosaveTimer = null;
+  var autosaveSuppressed = false; // true while restoring, so we don't immediately re-save what we just loaded
+
+  function idbOpen(){
+    return new Promise(function(resolve, reject){
+      if(typeof indexedDB === 'undefined'){ reject(new Error('no indexeddb')); return; }
+      var req = indexedDB.open(AUTOSAVE_DB, 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore(AUTOSAVE_STORE); };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+  }
+  function idbPut(key, value){
+    return idbOpen().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(AUTOSAVE_STORE, 'readwrite');
+        tx.objectStore(AUTOSAVE_STORE).put(value, key);
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+  function idbGet(key){
+    return idbOpen().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(AUTOSAVE_STORE, 'readonly');
+        var req = tx.objectStore(AUTOSAVE_STORE).get(key);
+        req.onsuccess = function(){ resolve(req.result); };
+        req.onerror = function(){ reject(req.error); };
+      });
+    });
+  }
+  function idbDelete(key){
+    return idbOpen().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(AUTOSAVE_STORE, 'readwrite');
+        tx.objectStore(AUTOSAVE_STORE).delete(key);
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+
+  // Debounced whole-state snapshot, written a beat after the last edit so a
+  // burst of clicks (toggling GM checkboxes, uploading several images) doesn't
+  // spam IndexedDB. Called from every render function that follows an edit.
+  function scheduleAutosave(){
+    if(autosaveSuppressed) return;
+    if(!currentRawEntries || !currentRawEntries.length) return;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(function(){
+      var snapshot = {
+        savedAt: Date.now(),
+        rawEntries: currentRawEntries,
+        speakers: currentSpeakers,
+        gmSet: currentGMSet ? Array.from(currentGMSet) : [],
+        lineOverrides: lineOverrides,
+        lineExpressionOverrides: lineExpressionOverrides,
+        lineBgOverrides: lineBgOverrides,
+        lineBgmOverrides: lineBgmOverrides,
+        lineJudgementOverrides: lineJudgementOverrides,
+        lineChapterLabels: lineChapterLabels,
+        customColors: customColors,
+        charExpressions: charExpressions,
+        bgLibrary: bgLibrary,
+        bgmLibrary: bgmLibrary,
+        coverInfo: coverInfo,
+        beatCount: currentBeats ? currentBeats.length : currentRawEntries.length
+      };
+      idbPut(AUTOSAVE_KEY, snapshot).catch(function(){ /* quota/private-mode — silently give up */ });
+    }, 900);
+  }
+  function clearAutosave(){
+    clearTimeout(autosaveTimer);
+    idbDelete(AUTOSAVE_KEY).catch(function(){});
+  }
 
   /* ---------------- parsing ---------------- */
   var CHAR_PALETTE = ['#c98a7d','#7d95c9','#a3c97d','#c9a15a','#9d7dc9','#7dc9b0','#c97dae','#b3c97d'];
@@ -1043,7 +1264,7 @@
   // Phase 2: classify raw entries using the current GM selection,
   // letting per-line manual overrides (from Advanced mode) win over auto-detection,
   // and attaching a chosen expression to dialogue/judgement beats when set.
-  function buildBeats(rawEntries, gmSet, overrides, exprOverrides, bgOverrides, bgmOverrides, judgementOverrides){
+  function buildBeats(rawEntries, gmSet, overrides, exprOverrides, bgOverrides, bgmOverrides, judgementOverrides, chapterLabels){
     var out = [];
     rawEntries.forEach(function(e, i){
       var forced = overrides ? overrides[i] : undefined;
@@ -1069,6 +1290,7 @@
       }
       if(bgOverrides && bgOverrides[i]) beat.bgChange = bgOverrides[i];
       if(bgmOverrides && bgmOverrides[i]) beat.bgmChange = bgmOverrides[i];
+      if(chapterLabels && chapterLabels[i]) beat.chapterLabel = chapterLabels[i];
       out.push(beat);
     });
     return out;
@@ -1131,6 +1353,8 @@
   var lineBgOverrides = {};
   var lineBgmOverrides = {};
   var lineJudgementOverrides = {}; // {index: {skill, result, resultKnown}} — used when lineOverrides[index]==='judgement'
+  var lineChapterLabels = {}; // {index: '1장. 시작'} — manual chapter markers for the scene-jump menu
+  var coverInfo = {title:'', subtitle:'', image:null}; // title screen shown before beat 0, if title is set
   var customColors = {}; // { name: '#rrggbb' } — user-picked overrides for the auto palette
   var charExpressions = {}; // { name: { order:['기본','웃음',...], images:{label: dataURL} } }
 
@@ -1321,6 +1545,7 @@
     });
     strip.appendChild(addTile);
     strip.appendChild(addInput);
+    scheduleAutosave();
   }
 
   function looksLikeYoutubeUrl(url){
@@ -1429,6 +1654,7 @@
     });
     strip.appendChild(addTile);
     strip.appendChild(addInput);
+    scheduleAutosave();
   }
 
   function tryParse(htmlString){
@@ -1484,6 +1710,9 @@
     lineJudgementOverrides = presetJudgements;
     lineBgOverrides = {};
     lineBgmOverrides = {};
+    lineChapterLabels = {};
+    coverInfo = {title:'', subtitle:'', image:null};
+    syncCoverFieldsUI();
     customColors = {};
     bgLibrary = {order:[], images:{}};
     bgmLibrary = {order:[], items:{}};
@@ -1496,10 +1725,33 @@
   }
 
   function rebuildAndRenderPreview(speakers){
-    var beats = buildBeats(currentRawEntries, currentGMSet, lineOverrides, lineExpressionOverrides, lineBgOverrides, lineBgmOverrides, lineJudgementOverrides);
+    var beats = buildBeats(currentRawEntries, currentGMSet, lineOverrides, lineExpressionOverrides, lineBgOverrides, lineBgmOverrides, lineJudgementOverrides, lineChapterLabels);
     currentBeats = beats;
     currentColors = buildCharColors(beats, currentGMSet);
     renderPreview(beats, currentColors, speakers);
+  }
+
+  function restoreFromSnapshot(snapshot){
+    autosaveSuppressed = true;
+    currentRawEntries = snapshot.rawEntries || [];
+    currentSpeakers = snapshot.speakers || uniqueSpeakers(currentRawEntries);
+    currentGMSet = new Set(snapshot.gmSet || []);
+    lineOverrides = snapshot.lineOverrides || {};
+    lineExpressionOverrides = snapshot.lineExpressionOverrides || {};
+    lineBgOverrides = snapshot.lineBgOverrides || {};
+    lineBgmOverrides = snapshot.lineBgmOverrides || {};
+    lineJudgementOverrides = snapshot.lineJudgementOverrides || {};
+    lineChapterLabels = snapshot.lineChapterLabels || {};
+    customColors = snapshot.customColors || {};
+    charExpressions = snapshot.charExpressions || {};
+    bgLibrary = snapshot.bgLibrary || {order:[], images:{}};
+    bgmLibrary = snapshot.bgmLibrary || {order:[], items:{}};
+    coverInfo = snapshot.coverInfo || {title:'', subtitle:'', image:null};
+    syncCoverFieldsUI();
+    renderBgStrip();
+    renderBgmStrip();
+    rebuildAndRenderPreview(currentSpeakers);
+    autosaveSuppressed = false;
   }
 
   function renderPreview(beats, colors, speakers){
@@ -1601,6 +1853,7 @@
     if(typeof previewPanel.scrollIntoView === 'function'){
       previewPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
     }
+    scheduleAutosave();
   }
 
   function syncAvatarPreview(name, avatarBtn){
@@ -1694,6 +1947,28 @@
 
     strip.appendChild(addTile);
     strip.appendChild(addInput);
+    scheduleAutosave();
+  }
+
+  // Offer to resume a previous editing session, unless this file is itself a
+  // standalone exported VN (in which case the setup UI never shows anyway).
+  if(!document.getElementById('exportData')){
+    idbGet(AUTOSAVE_KEY).then(function(snapshot){
+      if(!snapshot || !snapshot.rawEntries || !snapshot.rawEntries.length) return;
+      var banner = document.getElementById('resumeBanner');
+      var meta = document.getElementById('resumeBannerMeta');
+      var when = snapshot.savedAt ? new Date(snapshot.savedAt).toLocaleString('ko-KR') : '';
+      meta.textContent = (when ? when + ' · ' : '') + '장면 ' + (snapshot.beatCount || snapshot.rawEntries.length) + '개';
+      banner.hidden = false;
+      document.getElementById('resumeBtn').addEventListener('click', function(){
+        banner.hidden = true;
+        restoreFromSnapshot(snapshot);
+      });
+      document.getElementById('discardResumeBtn').addEventListener('click', function(){
+        banner.hidden = true;
+        clearAutosave();
+      });
+    }).catch(function(){ /* IndexedDB unavailable (private browsing etc.) — just skip */ });
   }
 
   dropzone.addEventListener('click', function(){ fileInput.click(); });
@@ -1824,6 +2099,45 @@
     pendingImportScenarios = null;
   });
 
+  /* ---------------- cover / title screen ---------------- */
+  var coverTitleInput = document.getElementById('coverTitleInput');
+  var coverSubtitleInput = document.getElementById('coverSubtitleInput');
+  var coverImageBtn = document.getElementById('coverImageBtn');
+  var coverImageInput = document.getElementById('coverImageInput');
+  var coverImageStatus = document.getElementById('coverImageStatus');
+  var coverImageClearBtn = document.getElementById('coverImageClearBtn');
+
+  function syncCoverFieldsUI(){
+    coverTitleInput.value = coverInfo.title || '';
+    coverSubtitleInput.value = coverInfo.subtitle || '';
+    coverImageStatus.textContent = coverInfo.image ? '이미지 등록됨' : '이미지 없음';
+    coverImageClearBtn.hidden = !coverInfo.image;
+  }
+  coverTitleInput.addEventListener('input', function(){
+    coverInfo.title = coverTitleInput.value;
+    scheduleAutosave();
+  });
+  coverSubtitleInput.addEventListener('input', function(){
+    coverInfo.subtitle = coverSubtitleInput.value;
+    scheduleAutosave();
+  });
+  coverImageBtn.addEventListener('click', function(){ coverImageInput.click(); });
+  coverImageInput.addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    readImageFile(file, function(dataUrl){
+      coverInfo.image = dataUrl;
+      syncCoverFieldsUI();
+      scheduleAutosave();
+    });
+    coverImageInput.value = '';
+  });
+  coverImageClearBtn.addEventListener('click', function(){
+    coverInfo.image = null;
+    syncCoverFieldsUI();
+    scheduleAutosave();
+  });
+
   /* ---------------- advanced review mode ---------------- */
   var TYPE_META = {
     dialogue:  {label:'대사', badge:'대사'},
@@ -1901,6 +2215,27 @@
       textEl.textContent = entry.text;
       body.appendChild(speakerRow);
       body.appendChild(textEl);
+
+      var chapterRow = document.createElement('div');
+      chapterRow.className = 'rc-chapter-row';
+      var chapterIcon = document.createElement('span');
+      chapterIcon.className = 'rc-chapter-icon';
+      chapterIcon.textContent = '📑';
+      chapterIcon.title = '이 줄을 챕터 시작점으로 표시';
+      var chapterInput = document.createElement('input');
+      chapterInput.type = 'text';
+      chapterInput.className = 'rc-chapter-input';
+      chapterInput.placeholder = '챕터 제목 (선택)';
+      chapterInput.value = lineChapterLabels[i] || '';
+      chapterInput.addEventListener('input', function(){
+        var v = chapterInput.value.trim();
+        if(v){ lineChapterLabels[i] = v; }
+        else{ delete lineChapterLabels[i]; }
+        rebuildAndRenderPreview(currentSpeakers);
+      });
+      chapterRow.appendChild(chapterIcon);
+      chapterRow.appendChild(chapterInput);
+      body.appendChild(chapterRow);
 
       var select = document.createElement('select');
       select.className = 'rc-select';
@@ -2038,6 +2373,7 @@
   document.getElementById('exitBtn').addEventListener('click', function(){
     stopAuto();
     stopBgm();
+    resetTypingState();
     if(isStandaloneExport){
       window.history.back();
     }else{
@@ -2055,6 +2391,7 @@
   var autoTimer = null;
   var backlog = [];
   var lastSpeaker = null;
+  var currentProgressKey = null;
 
   var dialogueBox = document.getElementById('dialogueBox');
   var nameTag = document.getElementById('nameTag');
@@ -2150,12 +2487,48 @@
     }
   });
 
+  // Small, dependency-free string hash so each distinct exported VN gets its
+  // own localStorage progress slot (needed because file:// pages often share
+  // one storage origin, so two different exported works could collide).
+  function simpleHash(str){
+    var h = 5381;
+    for(var k=0;k<str.length;k++){ h = ((h<<5)+h) + str.charCodeAt(k); h = h|0; }
+    return (h>>>0).toString(36);
+  }
+  function progressStorageKey(beats){
+    var first = beats[0] ? (beats[0].text||'') : '';
+    var last = beats[beats.length-1] ? (beats[beats.length-1].text||'') : '';
+    return 'logreel-progress-' + simpleHash(beats.length + '|' + first + '|' + last);
+  }
+  function loadSavedProgress(key){
+    try{
+      var raw = localStorage.getItem(key);
+      if(!raw) return null;
+      var data = JSON.parse(raw);
+      if(typeof data.idx === 'number' && data.idx > 0) return data;
+    }catch(e){}
+    return null;
+  }
+  function saveProgress(key, idxToSave){
+    try{ localStorage.setItem(key, JSON.stringify({idx:idxToSave, savedAt:Date.now()})); }catch(e){}
+  }
+  function clearProgress(key){
+    try{ localStorage.removeItem(key); }catch(e){}
+  }
+
+  function resetTypingState(){
+    clearInterval(typingTimer);
+    isTyping = false;
+  }
+
   function startPlayback(beats, colors){
+    resetTypingState();
     beatsArr = beats;
     charColors = colors;
     idx = -1;
     backlog = [];
     lastSpeaker = null;
+    refreshChapterMenu();
     backlogContent.innerHTML = '';
     resolvedBgAt = resolveSceneTrack(beats, 'bgChange');
     resolvedBgmAt = resolveSceneTrack(beats, 'bgmChange');
@@ -2164,9 +2537,48 @@
     bgLayers[0].style.opacity = '0';
     bgLayers[1].style.opacity = '0';
     hideAllLayers();
+    document.getElementById('resumePlayCard').classList.remove('show');
+    document.getElementById('coverScreen').classList.remove('show');
     stopAuto();
+    currentProgressKey = progressStorageKey(beats);
+    var saved = loadSavedProgress(currentProgressKey);
+    if(saved && saved.idx < beats.length - 1){
+      var pct = Math.round(((saved.idx+1)/beats.length)*100);
+      document.getElementById('resumePlayMeta').textContent = (saved.idx+1) + ' / ' + beats.length + '번째 장면 · ' + pct + '%';
+      document.getElementById('resumePlayCard').classList.add('show');
+      return;
+    }
+    if(coverInfo && coverInfo.title){
+      document.getElementById('coverScreenTitle').textContent = coverInfo.title;
+      var subEl = document.getElementById('coverScreenSubtitle');
+      if(coverInfo.subtitle){ subEl.textContent = coverInfo.subtitle; subEl.hidden = false; }
+      else{ subEl.hidden = true; }
+      document.getElementById('coverScreenBg').style.backgroundImage = coverInfo.image ? 'url(' + coverInfo.image + ')' : 'none';
+      document.getElementById('coverScreen').classList.add('show');
+      return;
+    }
     next();
   }
+
+  document.getElementById('coverStartBtn').addEventListener('click', function(){
+    document.getElementById('coverScreen').classList.remove('show');
+    next();
+  });
+
+  document.getElementById('resumePlayBtn').addEventListener('click', function(){
+    document.getElementById('resumePlayCard').classList.remove('show');
+    resetTypingState();
+    var saved = loadSavedProgress(currentProgressKey);
+    idx = saved ? saved.idx - 1 : -1; // next() increments to the saved beat
+    next();
+  });
+  document.getElementById('resumePlayRestartBtn').addEventListener('click', function(){
+    document.getElementById('resumePlayCard').classList.remove('show');
+    resetTypingState();
+    if(currentProgressKey) clearProgress(currentProgressKey);
+    idx = -1;
+    next();
+  });
 
   function hideAllLayers(){
     dialogueBox.classList.remove('show');
@@ -2226,6 +2638,7 @@
   function updateProgress(){
     var pct = beatsArr.length ? ((idx+1)/beatsArr.length)*100 : 0;
     progressFill.style.width = pct + '%';
+    if(currentProgressKey) saveProgress(currentProgressKey, idx);
   }
 
   function setPortrait(speaker, expression){
@@ -2409,11 +2822,82 @@
     if(record) pushBacklog({type:'dialogue', name:beat.speaker, text:beat.text});
   }
 
+  var CRIT_SUCCESS_LABELS = ['대성공', '크리티컬'];
+  var CRIT_FAIL_LABELS = ['펌블', '치명적 실패', '파멸적 실패'];
+  function computeJudgementStats(beats){
+    var judgements = beats.filter(function(b){ return b.type === 'judgement'; });
+    var successCount = 0, failCount = 0;
+    var critSuccess = 0, critFail = 0;
+    var byCharacter = {};
+    judgements.forEach(function(b){
+      byCharacter[b.speaker] = (byCharacter[b.speaker] || 0) + 1;
+      if(b.resultKnown){
+        if(isFailResult(b.result)) failCount++; else successCount++;
+        if(CRIT_SUCCESS_LABELS.indexOf(b.result) !== -1) critSuccess++;
+        if(CRIT_FAIL_LABELS.indexOf(b.result) !== -1) critFail++;
+      }
+    });
+    return {
+      total: judgements.length,
+      successCount: successCount, failCount: failCount,
+      critSuccess: critSuccess, critFail: critFail,
+      byCharacter: byCharacter
+    };
+  }
+
+  function renderJudgementStats(container){
+    var old = container.querySelector('.judge-stats');
+    if(old) old.remove();
+    var stats = computeJudgementStats(currentBeats);
+    if(stats.total === 0) return;
+
+    var known = stats.successCount + stats.failCount;
+    var rate = known ? Math.round((stats.successCount / known) * 100) : null;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'judge-stats';
+
+    var row = document.createElement('div');
+    row.className = 'judge-stats-row';
+    [
+      {num: String(stats.total), label: '총 판정'},
+      {num: rate === null ? '—' : rate + '%', label: '성공률'},
+      {num: String(stats.critSuccess), label: '대성공'},
+      {num: String(stats.critFail), label: '대실패/펌블'}
+    ].forEach(function(s){
+      var cell = document.createElement('div');
+      cell.className = 'judge-stat';
+      var numEl = document.createElement('span');
+      numEl.className = 'judge-stat-num';
+      numEl.textContent = s.num;
+      var labelEl = document.createElement('span');
+      labelEl.className = 'judge-stat-label';
+      labelEl.textContent = s.label;
+      cell.appendChild(numEl);
+      cell.appendChild(labelEl);
+      row.appendChild(cell);
+    });
+    wrap.appendChild(row);
+
+    var chars = document.createElement('div');
+    chars.className = 'judge-stats-chars';
+    Object.keys(stats.byCharacter).forEach(function(name){
+      var chip = document.createElement('span');
+      chip.className = 'judge-char-chip';
+      chip.textContent = name + ' ' + stats.byCharacter[name] + '회';
+      chars.appendChild(chip);
+    });
+    wrap.appendChild(chars);
+
+    container.appendChild(wrap);
+  }
+
   function showEndScreen(){
     hideAllLayers();
     endingText.textContent = '끝까지 재생했어요';
     endingCard.classList.add('show');
     endingCard.style.pointerEvents = 'auto';
+    if(currentProgressKey) clearProgress(currentProgressKey);
     var existing = endingCard.querySelector('.again-btn');
     if(existing) existing.remove();
     var again = document.createElement('button');
@@ -2422,9 +2906,11 @@
     again.textContent = '처음부터 다시 보기';
     again.addEventListener('click', function(){
       again.remove();
+      endingCard.querySelector('.judge-stats') && endingCard.querySelector('.judge-stats').remove();
       startPlayback(currentBeats, currentColors);
     });
     endingCard.appendChild(again);
+    renderJudgementStats(endingCard);
     progressFill.style.width = '100%';
   }
 
@@ -2482,6 +2968,45 @@
   /* backlog */
   backlogBtn.addEventListener('click', function(){ backlogPanel.classList.toggle('open'); });
   document.getElementById('closeBacklog').addEventListener('click', function(){ backlogPanel.classList.remove('open'); });
+
+  var chaptersBtn = document.getElementById('chaptersBtn');
+  var chaptersPanel = document.getElementById('chaptersPanel');
+  var chaptersContent = document.getElementById('chaptersContent');
+  chaptersBtn.addEventListener('click', function(){ chaptersPanel.classList.toggle('open'); });
+  document.getElementById('closeChapters').addEventListener('click', function(){ chaptersPanel.classList.remove('open'); });
+
+  function jumpToBeat(targetIdx){
+    if(targetIdx < 0 || targetIdx >= beatsArr.length) return;
+    stopAuto();
+    resetTypingState();
+    idx = targetIdx;
+    renderBeat(beatsArr[idx], {instant:true, record:false});
+    updateProgress();
+    chaptersPanel.classList.remove('open');
+  }
+
+  function refreshChapterMenu(){
+    var chapters = [];
+    beatsArr.forEach(function(b, i){
+      if(b.chapterLabel) chapters.push({label:b.chapterLabel, idx:i});
+    });
+    chaptersContent.innerHTML = '';
+    chapters.forEach(function(ch){
+      var item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'chapter-item';
+      var label = document.createElement('span');
+      label.textContent = ch.label;
+      var pct = document.createElement('span');
+      pct.className = 'chapter-item-pct';
+      pct.textContent = Math.round(((ch.idx+1)/beatsArr.length)*100) + '%';
+      item.appendChild(label);
+      item.appendChild(pct);
+      item.addEventListener('click', function(){ jumpToBeat(ch.idx); });
+      chaptersContent.appendChild(item);
+    });
+    chaptersBtn.classList.toggle('show', chapters.length > 0);
+  }
 
   /* ---------------- export a standalone playable file ---------------- */
   var exportBtn = document.getElementById('exportBtn');
