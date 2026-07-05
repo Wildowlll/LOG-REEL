@@ -136,6 +136,21 @@
 
   .preview-panel{margin-top:28px;padding-top:26px;border-top:1px solid var(--edge);}
   .preview-stats{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--edge);border-radius:8px;overflow:hidden;}
+  .room-filter-section{margin-bottom:20px;}
+  .room-filter-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+  .room-filter-item{
+    display:flex;align-items:center;gap:8px;
+    background:var(--panel);border:1px solid var(--edge);border-radius:8px;
+    padding:6px 8px 6px 14px;
+  }
+  .room-filter-label{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink);cursor:pointer;user-select:none;}
+  .room-filter-label input{accent-color:var(--gold);width:14px;height:14px;cursor:pointer;}
+  .room-color-input{
+    width:22px;height:22px;padding:0;border:1px solid var(--edge);border-radius:6px;
+    background:none;cursor:pointer;flex-shrink:0;
+  }
+  .room-color-input::-webkit-color-swatch-wrapper{padding:2px;}
+  .room-color-input::-webkit-color-swatch{border:none;border-radius:4px;}
   .stat{flex:1;text-align:center;padding:16px 8px;border-right:1px solid var(--edge);}
   .stat:last-child{border-right:none;}
   .stat-num{display:block;font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--gold);}
@@ -666,6 +681,15 @@
           <div class="stat"><span class="stat-num" id="statJudge">0</span><span class="stat-label">판정</span></div>
           <div class="stat"><span class="stat-num" id="statChar">0</span><span class="stat-label">등장인물</span></div>
         </div>
+
+        <div class="room-filter-section" id="roomFilterSection" hidden>
+          <div class="lib-header">
+            <span class="lib-title">🗂 로그 탭</span>
+            <span class="lib-sub">이 로그에는 탭이 여러 개 있어요 · 포함할 탭만 체크하세요</span>
+          </div>
+          <div class="room-filter-list" id="roomFilterList"></div>
+        </div>
+
         <div class="cast-rows" id="castList"></div>
         <p class="cast-hint">GM 이름이 다르다면 체크를 옮겨주세요 · 표정 이미지는 여러 장을 한 번에 선택하거나 끌어다 놓을 수 있어요 · 권장 크기 800×1200px 세로형(2:3), 배경 투명 PNG 추천</p>
 
@@ -920,6 +944,9 @@
         bgLibrary: bgLibrary,
         bgmLibrary: bgmLibrary,
         coverInfo: coverInfo,
+        currentRooms: currentRooms,
+        selectedRooms: Array.from(selectedRooms),
+        roomColors: roomColors,
         beatCount: currentBeats ? currentBeats.length : currentRawEntries.length
       };
       idbPut(AUTOSAVE_KEY, snapshot).catch(function(){ /* quota/private-mode — silently give up */ });
@@ -1028,7 +1055,12 @@
       var speaker = spans[spans.length-2].textContent.trim();
       var text = spans[spans.length-1].textContent.replace(/\s+/g,' ').trim();
       if(!text) return;
-      entries.push({speaker:speaker, text:text});
+      var room = null;
+      if(spans.length >= 3){
+        var roomMatch = spans[spans.length-3].textContent.trim().match(/^\[(.+)\]$/);
+        if(roomMatch) room = roomMatch[1].trim();
+      }
+      entries.push({speaker:speaker, text:text, room:room});
     });
     return entries;
   }
@@ -1293,6 +1325,7 @@
       if(bgOverrides && bgOverrides[i]) beat.bgChange = bgOverrides[i];
       if(bgmOverrides && bgmOverrides[i]) beat.bgmChange = bgmOverrides[i];
       if(chapterLabels && chapterLabels[i]) beat.chapterLabel = chapterLabels[i];
+      if(e.room) beat.room = e.room;
       out.push(beat);
     });
     return out;
@@ -1357,6 +1390,10 @@
   var lineJudgementOverrides = {}; // {index: {skill, result, resultKnown}} — used when lineOverrides[index]==='judgement'
   var lineChapterLabels = {}; // {index: '1장. 시작'} — manual chapter markers for the scene-jump menu
   var coverInfo = {title:'', subtitle:'', image:null}; // title screen shown before beat 0, if title is set
+  var currentRooms = []; // distinct ccfolia room/tab tags found in the log ('main', 'other', ...)
+  var selectedRooms = new Set(); // which rooms are currently included
+  var roomAutoSkipped = new Set(); // indices we skipped ourselves via the room filter (vs. a manual skip)
+  var roomColors = {}; // {room: '#hexcolor'} — tints the dialogue/narration box for that tab's lines
   var customColors = {}; // { name: '#rrggbb' } — user-picked overrides for the auto palette
   var charExpressions = {}; // { name: { order:['기본','웃음',...], images:{label: dataURL} } }
 
@@ -1720,10 +1757,71 @@
     bgmLibrary = {order:[], items:{}};
     renderBgStrip();
     renderBgmStrip();
+    currentRooms = Array.from(new Set(raw.map(function(e){ return e.room; }).filter(Boolean)));
+    selectedRooms = new Set(currentRooms);
+    roomAutoSkipped = new Set();
+    roomColors = {};
+    renderRoomFilter();
     var speakers = uniqueSpeakers(raw);
     currentSpeakers = speakers;
     currentGMSet = structuredParsers[format] ? new Set(['GM']) : new Set(guessGM(speakers));
     rebuildAndRenderPreview(speakers);
+  }
+
+  function applyRoomFilter(){
+    roomAutoSkipped.forEach(function(i){
+      if(lineOverrides[i] === 'skip') delete lineOverrides[i];
+    });
+    roomAutoSkipped = new Set();
+    currentRawEntries.forEach(function(entry, i){
+      if(entry.room && !selectedRooms.has(entry.room) && !lineOverrides[i]){
+        lineOverrides[i] = 'skip';
+        roomAutoSkipped.add(i);
+      }
+    });
+    rebuildAndRenderPreview(currentSpeakers);
+  }
+
+  function renderRoomFilter(){
+    var section = document.getElementById('roomFilterSection');
+    var list = document.getElementById('roomFilterList');
+    if(currentRooms.length < 2){
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    list.innerHTML = '';
+    currentRooms.forEach(function(room){
+      var item = document.createElement('div');
+      item.className = 'room-filter-item';
+
+      var label = document.createElement('label');
+      label.className = 'room-filter-label';
+      var checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = selectedRooms.has(room);
+      checkbox.addEventListener('change', function(){
+        if(checkbox.checked){ selectedRooms.add(room); }
+        else{ selectedRooms.delete(room); }
+        applyRoomFilter();
+      });
+      label.appendChild(checkbox);
+      label.appendChild(document.createTextNode(room));
+
+      var colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.className = 'room-color-input';
+      colorInput.value = roomColors[room] || '#3a3650';
+      colorInput.title = room + ' 탭 대사창 색상';
+      colorInput.addEventListener('input', function(){
+        roomColors[room] = colorInput.value;
+        rebuildAndRenderPreview(currentSpeakers);
+      });
+
+      item.appendChild(label);
+      item.appendChild(colorInput);
+      list.appendChild(item);
+    });
   }
 
   function rebuildAndRenderPreview(speakers){
@@ -1750,6 +1848,11 @@
     bgmLibrary = snapshot.bgmLibrary || {order:[], items:{}};
     coverInfo = snapshot.coverInfo || {title:'', subtitle:'', image:null};
     syncCoverFieldsUI();
+    currentRooms = snapshot.currentRooms || [];
+    selectedRooms = new Set(snapshot.selectedRooms || currentRooms);
+    roomAutoSkipped = new Set();
+    roomColors = snapshot.roomColors || {};
+    renderRoomFilter();
     renderBgStrip();
     renderBgmStrip();
     rebuildAndRenderPreview(currentSpeakers);
@@ -2737,12 +2840,32 @@
     backlogContent.scrollTop = backlogContent.scrollHeight;
   }
 
+  function hexToRgba(hex, alpha){
+    var h = String(hex || '').replace('#', '');
+    if(h.length === 3){ h = h.split('').map(function(c){ return c + c; }).join(''); }
+    var r = parseInt(h.substring(0,2), 16) || 0;
+    var g = parseInt(h.substring(2,4), 16) || 0;
+    var b = parseInt(h.substring(4,6), 16) || 0;
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+  function applyRoomTint(beat){
+    var color = beat && beat.room ? roomColors[beat.room] : null;
+    if(color){
+      dialogueBox.style.background = 'linear-gradient(180deg, ' + hexToRgba(color,.55) + ' 0%, ' + hexToRgba(color,.8) + ' 100%)';
+      narrationLayer.style.background = 'linear-gradient(180deg, ' + hexToRgba(color,.4) + ' 0%, ' + hexToRgba(color,.62) + ' 100%)';
+    }else{
+      dialogueBox.style.background = '';
+      narrationLayer.style.background = '';
+    }
+  }
+
   function renderBeat(beat, opts){
     opts = opts || {};
     var record = opts.record !== false;
     var instant = !!opts.instant;
     if(resolvedBgAt.length) applyBackground(resolvedBgAt[idx]);
     if(resolvedBgmAt.length) applyBgm(resolvedBgmAt[idx]);
+    applyRoomTint(beat);
     hideAllLayers();
 
     if(beat.type === 'narration'){
