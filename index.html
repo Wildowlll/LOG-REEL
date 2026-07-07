@@ -563,6 +563,10 @@
     font-family:var(--font-display);font-size:clamp(15.5px,2.1vw,18px);line-height:1.85;color:var(--ink);
     min-height:1.85em;
   }
+  .judge-detail{
+    font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);letter-spacing:.02em;
+    margin-top:4px;min-height:1em;
+  }
   .advance-hint{
     position:absolute;right:24px;bottom:24px;z-index:11;color:var(--ink-faint);font-size:15px;
     animation:hintBob 1.4s ease-in-out infinite;pointer-events:none;
@@ -844,6 +848,7 @@
           <div class="stamp" id="stamp"></div>
           <div class="name-tag" id="nameTag"></div>
           <div class="dialogue-text" id="dialogueText"></div>
+          <div class="judge-detail" id="judgeDetail"></div>
         </div>
         <div class="advance-hint" id="advanceHint">▼</div>
 
@@ -977,6 +982,19 @@
   function isFailResult(label){
     return label==='실패' || label==='펌블' || label==='치명적 실패' || label==='파멸적 실패';
   }
+  // Pulls out the actual dice mechanics (formula + intermediate rolls) so the
+  // player can show *how* a result was reached, not just the final word —
+  // e.g. "(1D100<=80) ＞ 93" alongside the "실패" stamp.
+  function extractRollDetail(text){
+    var parenIdx = text.search(/[\(（]/);
+    var base = parenIdx !== -1 ? text.slice(parenIdx) : text;
+    for(var i=0;i<KNOWN_RESULTS.length;i++){
+      var re = new RegExp('＞\\s*' + KNOWN_RESULTS[i] + '\\s*$');
+      if(re.test(base)){ base = base.replace(re, '').trim(); break; }
+    }
+    base = base.trim();
+    return base || null;
+  }
   function looksLikePureDice(s){
     return /^[\dD＞（）\(\)+\-<>=~\/\s]+$/i.test(s);
   }
@@ -1034,7 +1052,7 @@
     if(/^-{3,}$/.test(text)) return {type:'divider'};
     if(/＞/.test(text)){
       var res = extractResult(text);
-      return {type:'judgement', speaker:speaker, text:text, skill:extractSkill(text), result:res.label, resultKnown:res.known};
+      return {type:'judgement', speaker:speaker, text:text, skill:extractSkill(text), result:res.label, resultKnown:res.known, detail:extractRollDetail(text)};
     }
     if(gmSet && gmSet.has(speaker)){
       if(isCueLine(text)) return {type:'cue', speaker:speaker, text:text};
@@ -1105,7 +1123,12 @@
       var level = tktEl.getAttribute('data-level') || '';
       result = level === 'fail' ? '실패' : level === 'fumble' ? '펌블' : '결과';
     }
-    return {skill:skill, result:result};
+    var rollEl = tktEl.querySelector('.tkt-roll');
+    var rollVal = rollEl ? rollEl.textContent.trim() : null;
+    var targetEl = tktEl.querySelector('.tkt-meta i');
+    var targetMatch = targetEl ? targetEl.textContent.match(/(\d+)/) : null;
+    var detail = rollVal ? (targetMatch ? rollVal + ' / ' + targetMatch[1] : rollVal) : null;
+    return {skill:skill, result:result, detail:detail};
   }
 
   // Dedupes a character's portrait images (embedded per-message in Takoyaki Box,
@@ -1170,7 +1193,8 @@
           var parsed = parseTakoyakiTicket(tktEl);
           entries.push({
             speaker:speaker, text: parsed.skill + ' ' + parsed.result,
-            forcedType:'judgement', judgementSkill:parsed.skill, judgementResult:parsed.result
+            forcedType:'judgement', judgementSkill:parsed.skill, judgementResult:parsed.result,
+            judgementDetail:parsed.detail
           });
           return;
         }
@@ -1196,9 +1220,15 @@
   // prints .by on the FIRST message of a consecutive run from the same sender, so
   // later messages in that run carry no name at all and must inherit the last one.
   // Returns the same {entries, portraits} shape as parseTakoyakiLog.
+  function cleanRoll20Speaker(raw){
+    var name = String(raw || '').replace(/[:：]\s*$/, '').trim();
+    name = name.replace(/\s*[（(](GM|PC|NPC|KPC)[)）]\s*$/i, '').trim();
+    return name;
+  }
+
   function extractRoll20MessageText(el){
     var clone = el.cloneNode(true);
-    var junk = clone.querySelectorAll('.spacer, .avatar, .by, [class*="sheet-rolltemplate"]');
+    var junk = clone.querySelectorAll('.spacer, .avatar, .by, .tstamp, .flyout, [class*="sheet-rolltemplate"]');
     junk.forEach(function(n){ n.parentNode && n.parentNode.removeChild(n); });
     return extractTextWithBreaks(clone);
   }
@@ -1214,7 +1244,7 @@
       if(/\bhidden-message\b/.test(cls)) return; // GM-hidden rolls carry no useful info
 
       if(/\bdesc\b/.test(cls)){
-        var descText = extractTextWithBreaks(el);
+        var descText = extractRoll20MessageText(el);
         if(!descText) return;
         if(/^(PC|KPC|NPC)\s/.test(descText)) return; // session role-announcement, not narrative
         if(/^[.\s…]+$/.test(descText)){ entries.push({speaker:'GM', text:'', forcedType:'divider'}); return; }
@@ -1223,7 +1253,7 @@
       }
 
       if(/\bemote\b/.test(cls)){
-        var emoteText = extractTextWithBreaks(el);
+        var emoteText = extractRoll20MessageText(el);
         if(!emoteText) return;
         entries.push({speaker:'GM', text:emoteText, forcedType: isEndingLine(emoteText) ? 'ending' : 'cue'});
         return;
@@ -1233,22 +1263,25 @@
       // but Roll20 gives it its own "rollresult" class instead of "general".
       if(/\brollresult\b/.test(cls)){
         var rrByEl = el.querySelector('.by');
-        var rrSpeaker = rrByEl ? rrByEl.textContent.replace(/[:：]\s*$/, '').trim() : lastSpeaker;
+        var rrSpeaker = rrByEl ? cleanRoll20Speaker(rrByEl.textContent) : lastSpeaker;
         if(rrByEl) lastSpeaker = rrSpeaker;
         if(!rrSpeaker) return;
         var rolledEl = el.querySelector('.rolled');
         var rrResult = rolledEl ? rolledEl.textContent.trim() : '';
         if(!rrResult) return;
+        var formulaEl = el.querySelector('.formula');
+        var formulaText = formulaEl ? formulaEl.textContent.replace(/^rolling\s+/i, '').trim() : '';
+        var rrDetail = formulaText ? (formulaText + ' = ' + rrResult) : rrResult;
         entries.push({
           speaker:rrSpeaker, text:'주사위 ' + rrResult,
-          forcedType:'judgement', judgementSkill:'주사위', judgementResult:rrResult
+          forcedType:'judgement', judgementSkill:'주사위', judgementResult:rrResult, judgementDetail:rrDetail
         });
         return;
       }
 
       if(/\bgeneral\b/.test(cls)){
         var byEl = el.querySelector('.by');
-        var speaker = byEl ? byEl.textContent.replace(/[:：]\s*$/, '').trim() : lastSpeaker;
+        var speaker = byEl ? cleanRoll20Speaker(byEl.textContent) : lastSpeaker;
         if(byEl) lastSpeaker = speaker;
         if(!speaker) return; // continuation with nothing to inherit from — skip safely
 
@@ -1261,28 +1294,31 @@
           var captionEl = tmpl.querySelector('caption');
           var skill = captionEl ? captionEl.textContent.trim() : '판정';
           var result = '결과';
+          var rolled = null, target = null;
           var rows = tmpl.querySelectorAll('tr');
           for(var i=0;i<rows.length;i++){
             var label = rows[i].querySelector('.sheet-template_label');
-            if(label && label.getAttribute('data-i18n') === 'result'){
-              var valEl = rows[i].querySelector('.sheet-template_value');
-              if(valEl) result = valEl.textContent.trim();
-              break;
-            }
+            var i18n = label ? label.getAttribute('data-i18n') : null;
+            var valEl = rows[i].querySelector('.sheet-template_value');
+            if(i18n === 'result' && valEl) result = valEl.textContent.trim();
+            else if(i18n === 'rolled' && valEl) rolled = valEl.textContent.trim();
+            else if(i18n === 'value' && valEl) target = valEl.textContent.trim();
           }
+          var detail = rolled ? (target ? rolled + ' / ' + target : rolled) : null;
           entries.push({
             speaker:speaker, text: skill + ' ' + result,
-            forcedType:'judgement', judgementSkill:skill, judgementResult:result
+            forcedType:'judgement', judgementSkill:skill, judgementResult:result, judgementDetail:detail
           });
           return;
         }
 
         var plainText = extractRoll20MessageText(el);
-        var rollMatch = plainText.match(/rolling\s+.+?=\s*(-?\d+)\s*$/i);
+        var rollMatch = plainText.match(/rolling\s+(.+?)\s*=\s*(-?\d+)\s*$/i);
         if(rollMatch && plainText.length < 60){
           entries.push({
-            speaker:speaker, text:'주사위 ' + rollMatch[1],
-            forcedType:'judgement', judgementSkill:'주사위', judgementResult:rollMatch[1]
+            speaker:speaker, text:'주사위 ' + rollMatch[2],
+            forcedType:'judgement', judgementSkill:'주사위', judgementResult:rollMatch[2],
+            judgementDetail: rollMatch[1] + ' = ' + rollMatch[2]
           });
           return;
         }
@@ -1315,7 +1351,8 @@
           type:'judgement', speaker:e.speaker, text:e.text,
           skill: (jd && jd.skill) || '판정',
           result: (jd && jd.result) || '결과',
-          resultKnown: !!(jd && jd.resultKnown)
+          resultKnown: !!(jd && jd.resultKnown),
+          detail: (jd && jd.detail) || null
         };
       }
       else{ beat = classify(e.speaker, e.text, gmSet); }
@@ -1726,7 +1763,7 @@
           }
           if(entry.expression) presetExpressions[i] = entry.expression;
           if(entry.forcedType === 'judgement'){
-            presetJudgements[i] = {skill:entry.judgementSkill, result:entry.judgementResult, resultKnown:true};
+            presetJudgements[i] = {skill:entry.judgementSkill, result:entry.judgementResult, resultKnown:true, detail:entry.judgementDetail || null};
           }
         });
         presetPortraits = parsed.portraits;
@@ -2502,6 +2539,7 @@
   var nameTag = document.getElementById('nameTag');
   var dialogueText = document.getElementById('dialogueText');
   var stampEl = document.getElementById('stamp');
+  var judgeDetail = document.getElementById('judgeDetail');
   var narrationLayer = document.getElementById('narrationLayer');
   var cueBanner = document.getElementById('cueBanner');
   var systemToast = document.getElementById('systemToast');
@@ -2694,6 +2732,7 @@
     endingCard.classList.remove('show');
     endingCard.style.pointerEvents = '';
     stampEl.classList.remove('show');
+    judgeDetail.textContent = '';
     portraitWrap.classList.remove('show');
     advanceHint.style.opacity = '1';
     var strayBtn = endingCard.querySelector('.again-btn');
@@ -2908,6 +2947,7 @@
       nameTag.style.background = color;
       nameTag.textContent = beat.speaker;
       setPortrait(beat.speaker, beat.expression);
+      judgeDetail.textContent = beat.detail || '';
       var fail = beat.resultKnown && isFailResult(beat.result);
       var stampColor = !beat.resultKnown ? 'var(--gold)' : (fail ? 'var(--fail)' : 'var(--success)');
       var skillLine = '🎲 「' + beat.skill + '」 판정 중...';
@@ -3150,7 +3190,8 @@
         charColors: currentColors,
         charExpressions: charExpressions,
         bgLibrary: bgLibrary,
-        bgmLibrary: bgmLibrary
+        bgmLibrary: bgmLibrary,
+        roomColors: roomColors
       };
       var payload = JSON.stringify(exportData).replace(/</g, '\\u003c');
 
@@ -3203,6 +3244,7 @@
     charExpressions = data.charExpressions || {};
     bgLibrary = data.bgLibrary || {order:[], images:{}};
     bgmLibrary = data.bgmLibrary || {order:[], items:{}};
+    roomColors = data.roomColors || {};
     switchView('playerView');
     startPlayback(currentBeats, currentColors);
   }
